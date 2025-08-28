@@ -1,0 +1,421 @@
+[23:20:04] 打包工具已启动
+[23:20:04] 源路径: F:\Project\UnrealEngine\NEXBox\Client\Plugins\UtilityExtend\Third\SVGRegisterTool
+[23:20:04] 目标路径: C:\Users\sourc\Desktop
+[23:20:06] 开始打包...
+[23:20:06] 检查依赖...
+[23:20:06] 准备打包配置...
+[23:20:06] 包含文件: Resources/icon.ico
+[23:20:06] 包含文件: Resources/icon.svg
+[23:20:06] 包含文件: README.md
+[23:20:06] 包含文件: 使用说明.md
+[23:20:06] Spec文件已创建: F:\Project\UnrealEngine\NEXBox\Client\Plugins\UtilityExtend\Third\SVGRegisterTool\SVG_Icon_Manager.spec
+[23:20:06] 执行PyInstaller打包...
+[23:20:07] 执行命令: F:\Apps\Python\python.exe -m PyInstaller F:\Project\UnrealEngine\NEXBox\Client\Plugins\UtilityExtend\Third\SVGRegisterTool\SVG_Icon_Manager.spec --clean
+[23:20:07] 152 INFO: PyInstaller: 6.14.2, contrib hooks: 2025.6
+[23:20:07] 152 INFO: Python: 3.13.5
+[23:20:07] 172 INFO: Platform: Windows-11-10.0.26100-SP0
+[23:20:07] 173 INFO: Python environment: F:\Apps\Python
+[23:20:07] 175 INFO: Removing temporary files and cleaning cache in C:\Users\sourc\AppData\Local\pyinstaller
+[23:20:07] 184 INFO: Module search paths (PYTHONPATH):
+[23:20:07] ['F:\\Project\\UnrealEngine\\NEXBox\\Client\\Plugins\\UtilityExtend\\Third\\SVGRegisterTool',
+[23:20:07] 'F:\\Apps\\Python\\python313.zip',
+[23:20:07] 'F:\\Apps\\Python\\DLLs',
+[23:20:07] 'F:\\Apps\\Python\\Lib',
+[23:20:07] 'F:\\Apps\\Python',
+[23:20:07] 'F:\\Apps\\Python\\Lib\\site-packages',
+[23:20:07] 'F:\\Apps\\Python\\Lib\\site-packages\\setuptools\\_vendor',
+[23:20:07] 'F:\\Project\\UnrealEngine\\NEXBox\\Client\\Plugins\\UtilityExtend\\Third\\SVGRegisterTool',
+[23:20:07] 'F:\\Project\\UnrealEngine\\NEXBox\\Client\\Plugins\\UtilityExtend\\Third\\SVGRegisterTool']
+[23:20:07] 509 INFO: Appending 'datas' from .spec
+[23:20:07] 509 INFO: checking Analysis
+[23:20:07] 509 INFO: Building Analysis because Analysis-00.toc is non existent
+[23:20:07] 509 INFO: Running Analysis Analysis-00.toc
+[23:20:07] 509 INFO: Target bytecode optimization level: 0
+[23:20:07] 509 INFO: Initializing module dependency graph...
+[23:20:07] 510 INFO: Initializing module graph hook caches...
+[23:20:07] 518 INFO: Analyzing modules for base_library.zip ...
+[23:20:08] 1549 INFO: Processing standard module hook 'hook-encodings.py' from 'F:\\Apps\\Python\\Lib\\site-packages\\PyInstaller\\hooks'
+[23:20:09] 2835 INFO: Processing standard module hook 'hook-pickle.py' from 'F:\\Apps\\Python\\Lib\\site-packages\\PyInstaller\\hooks'
+[23:20:10] 3365 INFO: Processing standard module hook 'hook-heapq.py' from 'F:\\Apps\\Python\\Lib\\site-packages\\PyInstaller\\hooks'
+[23:20:10] 3655 INFO: Caching module dependency graph...
+[23:20:10] 3677 INFO: Looking for Python shared library...
+[23:20:10] 3682 INFO: Using Python shared library: F:\Apps\Python\python313.dll
+[23:20:10] 3682 INFO: Analyzing F:\Project\UnrealEngine\NEXBox\Client\Plugins\UtilityExtend\Third\SVGRegisterTool\SVG_Icon_Manager.py
+[23:20:10] 3705 INFO: Processing pre-find-module-path hook 'hook-tkinter.py' from 'F:\\Apps\\Python\\Lib\\site-packages\\PyInstaller\\hooks\\pre_find_module_path'
+[23:20:10] 3706 INFO: TclTkInfo: initializing cached Tcl/Tk info...
+[23:20:11] 3923 INFO: Processing standard module hook 'hook-_tkinter.py' from 'F:\\Apps\\Python\\Lib\\site-packages\\PyInstaller\\hooks'
+[23:20:11] 3972 INFO: Processing module hooks (post-graph stage)...
+[23:20:11] 3972 INFO: Processing standard module hook 'hook-_tkinter.py' from 'F:\\Apps\\Python\\Lib\\site-packages\\PyInstaller\\hooks'
+[23:20:11] 3984 INFO: Performing binary vs. data reclassification (931 entries)
+[23:20:11] 4035 INFO: Looking for ctypes DLLs
+[23:20:11] 4038 INFO: Analyzing run-time hooks ...
+[23:20:11] 4039 INFO: Including run-time hook 'pyi_rth_inspect.py' from 'F:\\Apps\\Python\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks'
+[23:20:11] 4041 INFO: Including run-time hook 'pyi_rth__tkinter.py' from 'F:\\Apps\\Python\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks'
+[23:20:11] 4054 INFO: Creating base_library.zip...
+[23:20:11] 4079 INFO: Looking for dynamic libraries
+[23:20:11] 4226 INFO: Extra DLL search directories (AddDllDirectory): []
+[23:20:11] 4226 INFO: Extra DLL search directories (PATH): []
+[23:20:11] 4417 INFO: Warnings written to F:\Project\UnrealEngine\NEXBox\Client\Plugins\UtilityExtend\Third\SVGRegisterTool\build\SVG_Icon_Manager\warn-SVG_Icon_Manager.txt
+[23:20:11] 4424 INFO: Graph cross-reference written to F:\Project\UnrealEngine\NEXBox\Client\Plugins\UtilityExtend\Third\SVGRegisterTool\build\SVG_Icon_Manager\xref-SVG_Icon_Manager.html
+[23:20:11] 4441 INFO: checking PYZ
+[23:20:11] 4441 INFO: Building PYZ because PYZ-00.toc is non existent
+[23:20:11] 4441 INFO: Building PYZ (ZlibArchive) F:\Project\UnrealEngine\NEXBox\Client\Plugins\UtilityExtend\Third\SVGRegisterTool\build\SVG_Icon_Manager\PYZ-00.pyz
+[23:20:11] 4605 INFO: Building PYZ (ZlibArchive) F:\Project\UnrealEngine\NEXBox\Client\Plugins\UtilityExtend\Third\SVGRegisterTool\build\SVG_Icon_Manager\PYZ-00.pyz completed successfully.
+[23:20:11] 4621 INFO: checking PKG
+[23:20:11] 4621 INFO: Building PKG because PKG-00.toc is non existent
+[23:20:11] 4621 INFO: Building PKG (CArchive) SVG_Icon_Manager.pkg
+[23:20:13] 6429 INFO: Building PKG (CArchive) SVG_Icon_Manager.pkg completed successfully.
+[23:20:13] 6436 INFO: Bootloader F:\Apps\Python\Lib\site-packages\PyInstaller\bootloader\Windows-64bit-intel\runw.exe
+[23:20:13] 6436 INFO: checking EXE
+[23:20:13] 6436 INFO: Building EXE because EXE-00.toc is non existent
+[23:20:13] 6436 INFO: Building EXE from EXE-00.toc
+[23:20:13] 6437 INFO: Copying bootloader EXE to F:\Project\UnrealEngine\NEXBox\Client\Plugins\UtilityExtend\Third\SVGRegisterTool\dist\SVG_Icon_Manager.exe
+[23:20:13] 6469 INFO: Copying icon to EXE
+[23:20:13] 6500 INFO: Copying 0 resources to EXE
+[23:20:13] 6500 INFO: Embedding manifest in EXE
+[23:20:13] 6503 INFO: Appending PKG archive to EXE
+[23:20:13] 6541 INFO: Fixing EXE headers
+[23:20:15] 8567 INFO: Building EXE from EXE-00.toc completed successfully.
+[23:20:15] 8575 INFO: Build complete! The results are available in: F:\Project\UnrealEngine\NEXBox\Client\Plugins\UtilityExtend\Third\SVGRegisterTool\dist
+[23:20:15] PyInstaller执行成功
+[23:20:15] 复制打包结果...
+[23:20:15] 打包结果目录不存在
+[23:20:15] 打包完成！
+[23:21:02] 打包工具已启动
+[23:21:02] 源路径: F:\Project\UnrealEngine\NEXBox\Client\Plugins\UtilityExtend\Third\SVGRegisterTool
+[23:21:02] 目标路径: C:\Users\sourc\Desktop
+[23:21:04] 开始打包...
+[23:21:04] 检查依赖...
+[23:21:04] 准备打包配置...
+[23:21:04] 包含文件: Resources/icon.ico
+[23:21:04] 包含文件: Resources/icon.svg
+[23:21:04] 包含文件: README.md
+[23:21:04] 包含文件: 使用说明.md
+[23:21:04] Spec文件已创建: F:\Project\UnrealEngine\NEXBox\Client\Plugins\UtilityExtend\Third\SVGRegisterTool\SVG_Icon_Manager.spec
+[23:21:04] 执行PyInstaller打包...
+[23:21:04] 执行命令: F:\Apps\Python\python.exe -m PyInstaller F:\Project\UnrealEngine\NEXBox\Client\Plugins\UtilityExtend\Third\SVGRegisterTool\SVG_Icon_Manager.spec --clean
+[23:21:04] 151 INFO: PyInstaller: 6.14.2, contrib hooks: 2025.6
+[23:21:04] 151 INFO: Python: 3.13.5
+[23:21:04] 171 INFO: Platform: Windows-11-10.0.26100-SP0
+[23:21:04] 171 INFO: Python environment: F:\Apps\Python
+[23:21:04] 174 INFO: Removing temporary files and cleaning cache in C:\Users\sourc\AppData\Local\pyinstaller
+[23:21:04] 177 INFO: Module search paths (PYTHONPATH):
+[23:21:04] ['F:\\Project\\UnrealEngine\\NEXBox\\Client\\Plugins\\UtilityExtend\\Third\\SVGRegisterTool',
+[23:21:04] 'F:\\Apps\\Python\\python313.zip',
+[23:21:04] 'F:\\Apps\\Python\\DLLs',
+[23:21:04] 'F:\\Apps\\Python\\Lib',
+[23:21:04] 'F:\\Apps\\Python',
+[23:21:04] 'F:\\Apps\\Python\\Lib\\site-packages',
+[23:21:04] 'F:\\Apps\\Python\\Lib\\site-packages\\setuptools\\_vendor',
+[23:21:04] 'F:\\Project\\UnrealEngine\\NEXBox\\Client\\Plugins\\UtilityExtend\\Third\\SVGRegisterTool',
+[23:21:04] 'F:\\Project\\UnrealEngine\\NEXBox\\Client\\Plugins\\UtilityExtend\\Third\\SVGRegisterTool']
+[23:21:04] 493 INFO: Appending 'datas' from .spec
+[23:21:04] 493 INFO: checking Analysis
+[23:21:04] 493 INFO: Building Analysis because Analysis-00.toc is non existent
+[23:21:04] 493 INFO: Running Analysis Analysis-00.toc
+[23:21:04] 493 INFO: Target bytecode optimization level: 0
+[23:21:04] 493 INFO: Initializing module dependency graph...
+[23:21:04] 494 INFO: Initializing module graph hook caches...
+[23:21:04] 502 INFO: Analyzing modules for base_library.zip ...
+[23:21:05] 1542 INFO: Processing standard module hook 'hook-heapq.py' from 'F:\\Apps\\Python\\Lib\\site-packages\\PyInstaller\\hooks'
+[23:21:05] 1607 INFO: Processing standard module hook 'hook-encodings.py' from 'F:\\Apps\\Python\\Lib\\site-packages\\PyInstaller\\hooks'
+[23:21:07] 2969 INFO: Processing standard module hook 'hook-pickle.py' from 'F:\\Apps\\Python\\Lib\\site-packages\\PyInstaller\\hooks'
+[23:21:07] 3763 INFO: Caching module dependency graph...
+[23:21:08] 3785 INFO: Looking for Python shared library...
+[23:21:08] 3789 INFO: Using Python shared library: F:\Apps\Python\python313.dll
+[23:21:08] 3789 INFO: Analyzing F:\Project\UnrealEngine\NEXBox\Client\Plugins\UtilityExtend\Third\SVGRegisterTool\SVG_Icon_Manager.py
+[23:21:08] 3811 INFO: Processing pre-find-module-path hook 'hook-tkinter.py' from 'F:\\Apps\\Python\\Lib\\site-packages\\PyInstaller\\hooks\\pre_find_module_path'
+[23:21:08] 3811 INFO: TclTkInfo: initializing cached Tcl/Tk info...
+[23:21:08] 4016 INFO: Processing standard module hook 'hook-_tkinter.py' from 'F:\\Apps\\Python\\Lib\\site-packages\\PyInstaller\\hooks'
+[23:21:08] 4060 INFO: Processing module hooks (post-graph stage)...
+[23:21:08] 4061 INFO: Processing standard module hook 'hook-_tkinter.py' from 'F:\\Apps\\Python\\Lib\\site-packages\\PyInstaller\\hooks'
+[23:21:08] 4073 INFO: Performing binary vs. data reclassification (931 entries)
+[23:21:08] 4125 INFO: Looking for ctypes DLLs
+[23:21:08] 4127 INFO: Analyzing run-time hooks ...
+[23:21:08] 4128 INFO: Including run-time hook 'pyi_rth_inspect.py' from 'F:\\Apps\\Python\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks'
+[23:21:08] 4129 INFO: Including run-time hook 'pyi_rth__tkinter.py' from 'F:\\Apps\\Python\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks'
+[23:21:08] 4142 INFO: Creating base_library.zip...
+[23:21:08] 4167 INFO: Looking for dynamic libraries
+[23:21:08] 4308 INFO: Extra DLL search directories (AddDllDirectory): []
+[23:21:08] 4308 INFO: Extra DLL search directories (PATH): []
+[23:21:08] 4492 INFO: Warnings written to F:\Project\UnrealEngine\NEXBox\Client\Plugins\UtilityExtend\Third\SVGRegisterTool\build\SVG_Icon_Manager\warn-SVG_Icon_Manager.txt
+[23:21:08] 4499 INFO: Graph cross-reference written to F:\Project\UnrealEngine\NEXBox\Client\Plugins\UtilityExtend\Third\SVGRegisterTool\build\SVG_Icon_Manager\xref-SVG_Icon_Manager.html
+[23:21:08] 4519 INFO: checking PYZ
+[23:21:08] 4519 INFO: Building PYZ because PYZ-00.toc is non existent
+[23:21:08] 4519 INFO: Building PYZ (ZlibArchive) F:\Project\UnrealEngine\NEXBox\Client\Plugins\UtilityExtend\Third\SVGRegisterTool\build\SVG_Icon_Manager\PYZ-00.pyz
+[23:21:08] 4675 INFO: Building PYZ (ZlibArchive) F:\Project\UnrealEngine\NEXBox\Client\Plugins\UtilityExtend\Third\SVGRegisterTool\build\SVG_Icon_Manager\PYZ-00.pyz completed successfully.
+[23:21:08] 4689 INFO: checking PKG
+[23:21:08] 4689 INFO: Building PKG because PKG-00.toc is non existent
+[23:21:08] 4689 INFO: Building PKG (CArchive) SVG_Icon_Manager.pkg
+[23:21:10] 6479 INFO: Building PKG (CArchive) SVG_Icon_Manager.pkg completed successfully.
+[23:21:10] 6487 INFO: Bootloader F:\Apps\Python\Lib\site-packages\PyInstaller\bootloader\Windows-64bit-intel\runw.exe
+[23:21:10] 6487 INFO: checking EXE
+[23:21:10] 6487 INFO: Building EXE because EXE-00.toc is non existent
+[23:21:10] 6487 INFO: Building EXE from EXE-00.toc
+[23:21:10] 6487 INFO: Copying bootloader EXE to F:\Project\UnrealEngine\NEXBox\Client\Plugins\UtilityExtend\Third\SVGRegisterTool\dist\SVG_Icon_Manager.exe
+[23:21:10] 6517 INFO: Copying icon to EXE
+[23:21:10] 6544 INFO: Copying 0 resources to EXE
+[23:21:10] 6544 INFO: Embedding manifest in EXE
+[23:21:10] 6547 INFO: Appending PKG archive to EXE
+[23:21:10] 6588 INFO: Fixing EXE headers
+[23:21:12] 7789 INFO: Building EXE from EXE-00.toc completed successfully.
+[23:21:12] 7798 INFO: Build complete! The results are available in: F:\Project\UnrealEngine\NEXBox\Client\Plugins\UtilityExtend\Third\SVGRegisterTool\dist
+[23:21:12] PyInstaller执行成功
+[23:21:12] 复制打包结果...
+[23:21:12] 打包结果目录不存在
+[23:21:12] 打包完成！
+[23:34:58] 打包工具已启动
+[23:34:58] 源路径: F:\Project\UnrealEngine\NEXBox\Client\Plugins\UtilityExtend\Third\SVGRegisterTool
+[23:34:58] 目标路径: F:\Project\UnrealEngine\NEXBox\Client\Plugins\UtilityExtend\Third\SVGRegisterTool\Dist
+[23:35:18] 目标路径已更改为: C:\Users\sourc\Desktop
+[23:35:22] 开始打包...
+[23:35:22] 检查依赖...
+[23:35:22] 准备打包配置...
+[23:35:22] 包含文件: Resources/icon.ico
+[23:35:22] 包含文件: Resources/icon.svg
+[23:35:22] 包含文件: README.md
+[23:35:22] 包含文件: 使用说明.md
+[23:35:22] Spec文件已创建: F:\Project\UnrealEngine\NEXBox\Client\Plugins\UtilityExtend\Third\SVGRegisterTool\SVG_Icon_Manager.spec
+[23:35:22] 执行PyInstaller打包...
+[23:35:22] 执行命令: F:\Apps\Python\python.exe -m PyInstaller F:\Project\UnrealEngine\NEXBox\Client\Plugins\UtilityExtend\Third\SVGRegisterTool\SVG_Icon_Manager.spec --clean
+[23:35:22] 157 INFO: PyInstaller: 6.14.2, contrib hooks: 2025.6
+[23:35:22] 157 INFO: Python: 3.13.5
+[23:35:22] 181 INFO: Platform: Windows-11-10.0.26100-SP0
+[23:35:22] 181 INFO: Python environment: F:\Apps\Python
+[23:35:22] 183 INFO: Removing temporary files and cleaning cache in C:\Users\sourc\AppData\Local\pyinstaller
+[23:35:22] 187 INFO: Module search paths (PYTHONPATH):
+[23:35:22] ['F:\\Project\\UnrealEngine\\NEXBox\\Client\\Plugins\\UtilityExtend\\Third\\SVGRegisterTool',
+[23:35:22] 'F:\\Apps\\Python\\python313.zip',
+[23:35:22] 'F:\\Apps\\Python\\DLLs',
+[23:35:22] 'F:\\Apps\\Python\\Lib',
+[23:35:22] 'F:\\Apps\\Python',
+[23:35:22] 'F:\\Apps\\Python\\Lib\\site-packages',
+[23:35:22] 'F:\\Apps\\Python\\Lib\\site-packages\\setuptools\\_vendor',
+[23:35:22] 'F:\\Project\\UnrealEngine\\NEXBox\\Client\\Plugins\\UtilityExtend\\Third\\SVGRegisterTool',
+[23:35:22] 'F:\\Project\\UnrealEngine\\NEXBox\\Client\\Plugins\\UtilityExtend\\Third\\SVGRegisterTool']
+[23:35:23] 513 INFO: Appending 'datas' from .spec
+[23:35:23] 513 INFO: checking Analysis
+[23:35:23] 513 INFO: Building Analysis because Analysis-00.toc is non existent
+[23:35:23] 513 INFO: Running Analysis Analysis-00.toc
+[23:35:23] 513 INFO: Target bytecode optimization level: 0
+[23:35:23] 513 INFO: Initializing module dependency graph...
+[23:35:23] 514 INFO: Initializing module graph hook caches...
+[23:35:23] 522 INFO: Analyzing modules for base_library.zip ...
+[23:35:24] 1673 INFO: Processing standard module hook 'hook-encodings.py' from 'F:\\Apps\\Python\\Lib\\site-packages\\PyInstaller\\hooks'
+[23:35:25] 2830 INFO: Processing standard module hook 'hook-pickle.py' from 'F:\\Apps\\Python\\Lib\\site-packages\\PyInstaller\\hooks'
+[23:35:26] 3399 INFO: Processing standard module hook 'hook-heapq.py' from 'F:\\Apps\\Python\\Lib\\site-packages\\PyInstaller\\hooks'
+[23:35:26] 3646 INFO: Caching module dependency graph...
+[23:35:26] 3667 INFO: Looking for Python shared library...
+[23:35:26] 3672 INFO: Using Python shared library: F:\Apps\Python\python313.dll
+[23:35:26] 3672 INFO: Analyzing F:\Project\UnrealEngine\NEXBox\Client\Plugins\UtilityExtend\Third\SVGRegisterTool\SVG_Icon_Manager.py
+[23:35:26] 3694 INFO: Processing pre-find-module-path hook 'hook-tkinter.py' from 'F:\\Apps\\Python\\Lib\\site-packages\\PyInstaller\\hooks\\pre_find_module_path'
+[23:35:26] 3694 INFO: TclTkInfo: initializing cached Tcl/Tk info...
+[23:35:26] 3911 INFO: Processing standard module hook 'hook-_tkinter.py' from 'F:\\Apps\\Python\\Lib\\site-packages\\PyInstaller\\hooks'
+[23:35:26] 3957 INFO: Processing module hooks (post-graph stage)...
+[23:35:26] 3957 INFO: Processing standard module hook 'hook-_tkinter.py' from 'F:\\Apps\\Python\\Lib\\site-packages\\PyInstaller\\hooks'
+[23:35:26] 3969 INFO: Performing binary vs. data reclassification (931 entries)
+[23:35:26] 4022 INFO: Looking for ctypes DLLs
+[23:35:26] 4024 INFO: Analyzing run-time hooks ...
+[23:35:26] 4025 INFO: Including run-time hook 'pyi_rth_inspect.py' from 'F:\\Apps\\Python\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks'
+[23:35:26] 4027 INFO: Including run-time hook 'pyi_rth__tkinter.py' from 'F:\\Apps\\Python\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks'
+[23:35:26] 4040 INFO: Creating base_library.zip...
+[23:35:26] 4065 INFO: Looking for dynamic libraries
+[23:35:26] 4210 INFO: Extra DLL search directories (AddDllDirectory): []
+[23:35:26] 4210 INFO: Extra DLL search directories (PATH): []
+[23:35:27] 4401 INFO: Warnings written to F:\Project\UnrealEngine\NEXBox\Client\Plugins\UtilityExtend\Third\SVGRegisterTool\build\SVG_Icon_Manager\warn-SVG_Icon_Manager.txt
+[23:35:27] 4408 INFO: Graph cross-reference written to F:\Project\UnrealEngine\NEXBox\Client\Plugins\UtilityExtend\Third\SVGRegisterTool\build\SVG_Icon_Manager\xref-SVG_Icon_Manager.html
+[23:35:27] 4425 INFO: checking PYZ
+[23:35:27] 4425 INFO: Building PYZ because PYZ-00.toc is non existent
+[23:35:27] 4425 INFO: Building PYZ (ZlibArchive) F:\Project\UnrealEngine\NEXBox\Client\Plugins\UtilityExtend\Third\SVGRegisterTool\build\SVG_Icon_Manager\PYZ-00.pyz
+[23:35:27] 4582 INFO: Building PYZ (ZlibArchive) F:\Project\UnrealEngine\NEXBox\Client\Plugins\UtilityExtend\Third\SVGRegisterTool\build\SVG_Icon_Manager\PYZ-00.pyz completed successfully.
+[23:35:27] 4597 INFO: checking PKG
+[23:35:27] 4597 INFO: Building PKG because PKG-00.toc is non existent
+[23:35:27] 4597 INFO: Building PKG (CArchive) SVG_Icon_Manager.pkg
+[23:35:29] 6406 INFO: Building PKG (CArchive) SVG_Icon_Manager.pkg completed successfully.
+[23:35:29] 6415 INFO: Bootloader F:\Apps\Python\Lib\site-packages\PyInstaller\bootloader\Windows-64bit-intel\runw.exe
+[23:35:29] 6415 INFO: checking EXE
+[23:35:29] 6415 INFO: Building EXE because EXE-00.toc is non existent
+[23:35:29] 6415 INFO: Building EXE from EXE-00.toc
+[23:35:29] 6415 INFO: Copying bootloader EXE to F:\Project\UnrealEngine\NEXBox\Client\Plugins\UtilityExtend\Third\SVGRegisterTool\dist\SVG_Icon_Manager.exe
+[23:35:29] 6448 INFO: Copying icon to EXE
+[23:35:29] 6477 INFO: Copying 0 resources to EXE
+[23:35:29] 6477 INFO: Embedding manifest in EXE
+[23:35:29] 6479 INFO: Appending PKG archive to EXE
+[23:35:29] 6517 INFO: Fixing EXE headers
+[23:35:31] 8771 INFO: Building EXE from EXE-00.toc completed successfully.
+[23:35:31] 8780 INFO: Build complete! The results are available in: F:\Project\UnrealEngine\NEXBox\Client\Plugins\UtilityExtend\Third\SVGRegisterTool\dist
+[23:35:31] PyInstaller执行成功
+[23:35:31] 复制打包结果...
+[23:35:31] 查找打包结果目录: F:\Project\UnrealEngine\NEXBox\Client\Plugins\UtilityExtend\Third\SVGRegisterTool\dist\SVG_Icon_Manager
+[23:35:31] 打包结果目录不存在
+[23:35:31] 打包完成！
+[23:36:05] 打包工具已启动
+[23:36:05] 源路径: F:\Project\UnrealEngine\NEXBox\Client\Plugins\UtilityExtend\Third\SVGRegisterTool
+[23:36:05] 目标路径: F:\Project\UnrealEngine\NEXBox\Client\Plugins\UtilityExtend\Third\SVGRegisterTool\Dist
+[23:36:09] 开始打包...
+[23:36:09] 检查依赖...
+[23:36:09] 准备打包配置...
+[23:36:09] 包含文件: Resources/icon.ico
+[23:36:09] 包含文件: Resources/icon.svg
+[23:36:09] 包含文件: README.md
+[23:36:09] 包含文件: 使用说明.md
+[23:36:09] Spec文件已创建: F:\Project\UnrealEngine\NEXBox\Client\Plugins\UtilityExtend\Third\SVGRegisterTool\SVG_Icon_Manager.spec
+[23:36:09] 执行PyInstaller打包...
+[23:36:09] 执行命令: F:\Apps\Python\python.exe -m PyInstaller F:\Project\UnrealEngine\NEXBox\Client\Plugins\UtilityExtend\Third\SVGRegisterTool\SVG_Icon_Manager.spec --clean
+[23:36:09] 150 INFO: PyInstaller: 6.14.2, contrib hooks: 2025.6
+[23:36:09] 151 INFO: Python: 3.13.5
+[23:36:09] 171 INFO: Platform: Windows-11-10.0.26100-SP0
+[23:36:09] 171 INFO: Python environment: F:\Apps\Python
+[23:36:09] 173 INFO: Removing temporary files and cleaning cache in C:\Users\sourc\AppData\Local\pyinstaller
+[23:36:09] 177 INFO: Module search paths (PYTHONPATH):
+[23:36:09] ['F:\\Project\\UnrealEngine\\NEXBox\\Client\\Plugins\\UtilityExtend\\Third\\SVGRegisterTool',
+[23:36:09] 'F:\\Apps\\Python\\python313.zip',
+[23:36:09] 'F:\\Apps\\Python\\DLLs',
+[23:36:09] 'F:\\Apps\\Python\\Lib',
+[23:36:09] 'F:\\Apps\\Python',
+[23:36:09] 'F:\\Apps\\Python\\Lib\\site-packages',
+[23:36:09] 'F:\\Apps\\Python\\Lib\\site-packages\\setuptools\\_vendor',
+[23:36:09] 'F:\\Project\\UnrealEngine\\NEXBox\\Client\\Plugins\\UtilityExtend\\Third\\SVGRegisterTool',
+[23:36:09] 'F:\\Project\\UnrealEngine\\NEXBox\\Client\\Plugins\\UtilityExtend\\Third\\SVGRegisterTool']
+[23:36:10] 486 INFO: Appending 'datas' from .spec
+[23:36:10] 486 INFO: checking Analysis
+[23:36:10] 486 INFO: Building Analysis because Analysis-00.toc is non existent
+[23:36:10] 486 INFO: Running Analysis Analysis-00.toc
+[23:36:10] 486 INFO: Target bytecode optimization level: 0
+[23:36:10] 486 INFO: Initializing module dependency graph...
+[23:36:10] 487 INFO: Initializing module graph hook caches...
+[23:36:10] 495 INFO: Analyzing modules for base_library.zip ...
+[23:36:11] 1408 INFO: Processing standard module hook 'hook-encodings.py' from 'F:\\Apps\\Python\\Lib\\site-packages\\PyInstaller\\hooks'
+[23:36:11] 2141 INFO: Processing standard module hook 'hook-heapq.py' from 'F:\\Apps\\Python\\Lib\\site-packages\\PyInstaller\\hooks'
+[23:36:12] 2848 INFO: Processing standard module hook 'hook-pickle.py' from 'F:\\Apps\\Python\\Lib\\site-packages\\PyInstaller\\hooks'
+[23:36:13] 3675 INFO: Caching module dependency graph...
+[23:36:13] 3696 INFO: Looking for Python shared library...
+[23:36:13] 3700 INFO: Using Python shared library: F:\Apps\Python\python313.dll
+[23:36:13] 3700 INFO: Analyzing F:\Project\UnrealEngine\NEXBox\Client\Plugins\UtilityExtend\Third\SVGRegisterTool\SVG_Icon_Manager.py
+[23:36:13] 3721 INFO: Processing pre-find-module-path hook 'hook-tkinter.py' from 'F:\\Apps\\Python\\Lib\\site-packages\\PyInstaller\\hooks\\pre_find_module_path'
+[23:36:13] 3722 INFO: TclTkInfo: initializing cached Tcl/Tk info...
+[23:36:13] 3940 INFO: Processing standard module hook 'hook-_tkinter.py' from 'F:\\Apps\\Python\\Lib\\site-packages\\PyInstaller\\hooks'
+[23:36:13] 3987 INFO: Processing module hooks (post-graph stage)...
+[23:36:13] 3987 INFO: Processing standard module hook 'hook-_tkinter.py' from 'F:\\Apps\\Python\\Lib\\site-packages\\PyInstaller\\hooks'
+[23:36:13] 3999 INFO: Performing binary vs. data reclassification (931 entries)
+[23:36:13] 4052 INFO: Looking for ctypes DLLs
+[23:36:13] 4054 INFO: Analyzing run-time hooks ...
+[23:36:13] 4055 INFO: Including run-time hook 'pyi_rth_inspect.py' from 'F:\\Apps\\Python\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks'
+[23:36:13] 4056 INFO: Including run-time hook 'pyi_rth__tkinter.py' from 'F:\\Apps\\Python\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks'
+[23:36:13] 4069 INFO: Creating base_library.zip...
+[23:36:13] 4094 INFO: Looking for dynamic libraries
+[23:36:13] 4231 INFO: Extra DLL search directories (AddDllDirectory): []
+[23:36:13] 4231 INFO: Extra DLL search directories (PATH): []
+[23:36:14] 4419 INFO: Warnings written to F:\Project\UnrealEngine\NEXBox\Client\Plugins\UtilityExtend\Third\SVGRegisterTool\build\SVG_Icon_Manager\warn-SVG_Icon_Manager.txt
+[23:36:14] 4426 INFO: Graph cross-reference written to F:\Project\UnrealEngine\NEXBox\Client\Plugins\UtilityExtend\Third\SVGRegisterTool\build\SVG_Icon_Manager\xref-SVG_Icon_Manager.html
+[23:36:14] 4455 INFO: checking PYZ
+[23:36:14] 4455 INFO: Building PYZ because PYZ-00.toc is non existent
+[23:36:14] 4455 INFO: Building PYZ (ZlibArchive) F:\Project\UnrealEngine\NEXBox\Client\Plugins\UtilityExtend\Third\SVGRegisterTool\build\SVG_Icon_Manager\PYZ-00.pyz
+[23:36:14] 4612 INFO: Building PYZ (ZlibArchive) F:\Project\UnrealEngine\NEXBox\Client\Plugins\UtilityExtend\Third\SVGRegisterTool\build\SVG_Icon_Manager\PYZ-00.pyz completed successfully.
+[23:36:14] 4626 INFO: checking PKG
+[23:36:14] 4626 INFO: Building PKG because PKG-00.toc is non existent
+[23:36:14] 4626 INFO: Building PKG (CArchive) SVG_Icon_Manager.pkg
+[23:36:16] 6440 INFO: Building PKG (CArchive) SVG_Icon_Manager.pkg completed successfully.
+[23:36:16] 6450 INFO: Bootloader F:\Apps\Python\Lib\site-packages\PyInstaller\bootloader\Windows-64bit-intel\runw.exe
+[23:36:16] 6451 INFO: checking EXE
+[23:36:16] 6451 INFO: Building EXE because EXE-00.toc is non existent
+[23:36:16] 6451 INFO: Building EXE from EXE-00.toc
+[23:36:16] 6652 INFO: Copying bootloader EXE to F:\Project\UnrealEngine\NEXBox\Client\Plugins\UtilityExtend\Third\SVGRegisterTool\dist\SVG_Icon_Manager.exe
+[23:36:16] 6653 WARNING: Execution of 'copyfile' failed on attempt #1 / 20: PermissionError(13, 'Permission denied'). Retrying in 0.05 second(s)...
+[23:36:16] 6734 INFO: Copying icon to EXE
+[23:36:16] 6762 INFO: Copying 0 resources to EXE
+[23:36:16] 6762 INFO: Embedding manifest in EXE
+[23:36:16] 6775 WARNING: Execution of 'write_manifest_to_executable' failed on attempt #1 / 20: error(110, 'EndUpdateResourceW', '系统无法打开指定的设备或文件。'). Retrying in 0.05 second(s)...
+[23:36:16] 6830 INFO: Appending PKG archive to EXE
+[23:36:16] 6869 INFO: Fixing EXE headers
+[23:36:17] 8353 INFO: Building EXE from EXE-00.toc completed successfully.
+[23:36:17] 8361 INFO: Build complete! The results are available in: F:\Project\UnrealEngine\NEXBox\Client\Plugins\UtilityExtend\Third\SVGRegisterTool\dist
+[23:36:18] PyInstaller执行成功
+[23:36:18] 复制打包结果...
+[23:36:18] 查找打包结果目录: F:\Project\UnrealEngine\NEXBox\Client\Plugins\UtilityExtend\Third\SVGRegisterTool\dist\SVG_Icon_Manager
+[23:36:18] 打包结果目录不存在
+[23:36:18] 打包完成！
+[23:50:31] 打包工具已启动
+[23:50:31] 源路径: F:\Project\UnrealEngine\NEXBox\Client\Plugins\UtilityExtend\Third\SVGRegisterTool
+[23:50:31] 目标路径: F:\Project\UnrealEngine\NEXBox\Client\Plugins\UtilityExtend\Third\SVGRegisterTool\Dist
+[23:51:00] 开始打包...
+[23:51:00] 检查依赖...
+[23:51:00] 准备打包配置...
+[23:51:00] 包含文件: Resources/icon.ico
+[23:51:00] 包含文件: Resources/icon.svg
+[23:51:00] 包含文件: README.md
+[23:51:00] 包含文件: 使用说明.md
+[23:51:00] Spec文件已创建: F:\Project\UnrealEngine\NEXBox\Client\Plugins\UtilityExtend\Third\SVGRegisterTool\图标注册工具.spec
+[23:51:00] 执行PyInstaller打包...
+[23:51:00] 执行命令: F:\Apps\Python\python.exe -m PyInstaller F:\Project\UnrealEngine\NEXBox\Client\Plugins\UtilityExtend\Third\SVGRegisterTool\图标注册工具.spec --clean
+[23:51:00] 357 INFO: PyInstaller: 6.14.2, contrib hooks: 2025.6
+[23:51:00] 357 INFO: Python: 3.13.5
+[23:51:00] 380 INFO: Platform: Windows-11-10.0.26100-SP0
+[23:51:00] 380 INFO: Python environment: F:\Apps\Python
+[23:51:00] 383 INFO: Removing temporary files and cleaning cache in C:\Users\sourc\AppData\Local\pyinstaller
+[23:51:00] 391 INFO: Module search paths (PYTHONPATH):
+[23:51:00] ['F:\\Project\\UnrealEngine\\NEXBox\\Client\\Plugins\\UtilityExtend\\Third\\SVGRegisterTool',
+[23:51:00] 'F:\\Apps\\Python\\python313.zip',
+[23:51:00] 'F:\\Apps\\Python\\DLLs',
+[23:51:00] 'F:\\Apps\\Python\\Lib',
+[23:51:00] 'F:\\Apps\\Python',
+[23:51:00] 'F:\\Apps\\Python\\Lib\\site-packages',
+[23:51:00] 'F:\\Apps\\Python\\Lib\\site-packages\\setuptools\\_vendor',
+[23:51:00] 'F:\\Project\\UnrealEngine\\NEXBox\\Client\\Plugins\\UtilityExtend\\Third\\SVGRegisterTool',
+[23:51:00] 'F:\\Project\\UnrealEngine\\NEXBox\\Client\\Plugins\\UtilityExtend\\Third\\SVGRegisterTool']
+[23:51:01] 761 INFO: Appending 'datas' from .spec
+[23:51:01] 761 INFO: checking Analysis
+[23:51:01] 761 INFO: Building Analysis because Analysis-00.toc is non existent
+[23:51:01] 761 INFO: Running Analysis Analysis-00.toc
+[23:51:01] 761 INFO: Target bytecode optimization level: 0
+[23:51:01] 761 INFO: Initializing module dependency graph...
+[23:51:01] 762 INFO: Initializing module graph hook caches...
+[23:51:01] 782 INFO: Analyzing modules for base_library.zip ...
+[23:51:02] 1710 INFO: Processing standard module hook 'hook-encodings.py' from 'F:\\Apps\\Python\\Lib\\site-packages\\PyInstaller\\hooks'
+[23:51:03] 3593 INFO: Processing standard module hook 'hook-pickle.py' from 'F:\\Apps\\Python\\Lib\\site-packages\\PyInstaller\\hooks'
+[23:51:04] 4545 INFO: Processing standard module hook 'hook-heapq.py' from 'F:\\Apps\\Python\\Lib\\site-packages\\PyInstaller\\hooks'
+[23:51:05] 5365 INFO: Caching module dependency graph...
+[23:51:05] 5387 INFO: Looking for Python shared library...
+[23:51:05] 5395 INFO: Using Python shared library: F:\Apps\Python\python313.dll
+[23:51:05] 5395 INFO: Analyzing F:\Project\UnrealEngine\NEXBox\Client\Plugins\UtilityExtend\Third\SVGRegisterTool\SVG_Icon_Manager.py
+[23:51:05] 5425 INFO: Processing pre-find-module-path hook 'hook-tkinter.py' from 'F:\\Apps\\Python\\Lib\\site-packages\\PyInstaller\\hooks\\pre_find_module_path'
+[23:51:05] 5425 INFO: TclTkInfo: initializing cached Tcl/Tk info...
+[23:51:05] 5650 INFO: Processing standard module hook 'hook-_tkinter.py' from 'F:\\Apps\\Python\\Lib\\site-packages\\PyInstaller\\hooks'
+[23:51:06] 5732 INFO: Processing module hooks (post-graph stage)...
+[23:51:06] 5733 INFO: Processing standard module hook 'hook-_tkinter.py' from 'F:\\Apps\\Python\\Lib\\site-packages\\PyInstaller\\hooks'
+[23:51:06] 5739 INFO: Performing binary vs. data reclassification (931 entries)
+[23:51:08] 7746 INFO: Looking for ctypes DLLs
+[23:51:08] 7749 INFO: Analyzing run-time hooks ...
+[23:51:08] 7750 INFO: Including run-time hook 'pyi_rth_inspect.py' from 'F:\\Apps\\Python\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks'
+[23:51:08] 7757 INFO: Including run-time hook 'pyi_rth__tkinter.py' from 'F:\\Apps\\Python\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks'
+[23:51:08] 7774 INFO: Creating base_library.zip...
+[23:51:08] 7803 INFO: Looking for dynamic libraries
+[23:51:08] 7932 INFO: Extra DLL search directories (AddDllDirectory): []
+[23:51:08] 7932 INFO: Extra DLL search directories (PATH): []
+[23:51:08] 8184 INFO: Warnings written to F:\Project\UnrealEngine\NEXBox\Client\Plugins\UtilityExtend\Third\SVGRegisterTool\build\图标注册工具\warn-图标注册工具.txt
+[23:51:08] 8191 INFO: Graph cross-reference written to F:\Project\UnrealEngine\NEXBox\Client\Plugins\UtilityExtend\Third\SVGRegisterTool\build\图标注册工具\xref-图标注册工具.html
+[23:51:08] 8232 INFO: checking PYZ
+[23:51:08] 8232 INFO: Building PYZ because PYZ-00.toc is non existent
+[23:51:08] 8232 INFO: Building PYZ (ZlibArchive) F:\Project\UnrealEngine\NEXBox\Client\Plugins\UtilityExtend\Third\SVGRegisterTool\build\图标注册工具\PYZ-00.pyz
+[23:51:08] 8390 INFO: Building PYZ (ZlibArchive) F:\Project\UnrealEngine\NEXBox\Client\Plugins\UtilityExtend\Third\SVGRegisterTool\build\图标注册工具\PYZ-00.pyz completed successfully.
+[23:51:08] 8405 INFO: checking PKG
+[23:51:08] 8405 INFO: Building PKG because PKG-00.toc is non existent
+[23:51:08] 8405 INFO: Building PKG (CArchive) 图标注册工具.pkg
+[23:51:10] 10260 INFO: Building PKG (CArchive) 图标注册工具.pkg completed successfully.
+[23:51:10] 10268 INFO: Bootloader F:\Apps\Python\Lib\site-packages\PyInstaller\bootloader\Windows-64bit-intel\runw.exe
+[23:51:10] 10268 INFO: checking EXE
+[23:51:10] 10268 INFO: Building EXE because EXE-00.toc is non existent
+[23:51:10] 10268 INFO: Building EXE from EXE-00.toc
+[23:51:10] 10268 INFO: Copying bootloader EXE to F:\Project\UnrealEngine\NEXBox\Client\Plugins\UtilityExtend\Third\SVGRegisterTool\dist\图标注册工具.exe
+[23:51:10] 10328 INFO: Copying icon to EXE
+[23:51:10] 10360 INFO: Copying 0 resources to EXE
+[23:51:10] 10360 INFO: Embedding manifest in EXE
+[23:51:10] 10363 INFO: Appending PKG archive to EXE
+[23:51:10] 10400 INFO: Fixing EXE headers
+[23:51:13] 13272 INFO: Building EXE from EXE-00.toc completed successfully.
+[23:51:13] 13281 INFO: Build complete! The results are available in: F:\Project\UnrealEngine\NEXBox\Client\Plugins\UtilityExtend\Third\SVGRegisterTool\dist
+[23:51:13] PyInstaller执行成功
+[23:51:13] 复制打包结果...
+[23:51:13] 查找打包结果目录: F:\Project\UnrealEngine\NEXBox\Client\Plugins\UtilityExtend\Third\SVGRegisterTool\dist\图标注册工具
+[23:51:13] 打包结果目录不存在
+[23:51:13] 打包完成！

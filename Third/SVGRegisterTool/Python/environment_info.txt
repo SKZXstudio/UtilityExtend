@@ -1,0 +1,35 @@
+SVGRegisterTool Python环境信息
+=====================================
+
+创建时间: 2025年8月11日
+Python版本: 3.13.5
+环境类型: 虚拟环境 (venv)
+
+系统信息:
+- 操作系统: Windows 10
+- 架构: x64
+- Python路径: Python\venv\Scripts\python.exe
+
+核心模块:
+✓ tkinter - GUI界面支持
+✓ os - 操作系统接口
+✓ re - 正则表达式
+✓ pathlib - 路径处理
+✓ json - JSON数据处理
+✓ shutil - 文件操作
+
+依赖包:
+- 无额外依赖包（使用Python标准库）
+
+环境大小: 约 50-100 MB
+兼容性: Python 3.7+
+
+使用说明:
+1. Windows: 双击 run_tool_python.bat
+2. Linux/macOS: 运行 ./run_tool_python.sh
+3. 手动: Python\venv\Scripts\python.exe SVG_Icon_Manager.py
+
+注意事项:
+- 请勿删除Python文件夹
+- 工具必须在SVGRegisterTool目录中运行
+- 确保有足够的文件读写权限

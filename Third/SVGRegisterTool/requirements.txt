@@ -1,0 +1,20 @@
+# SVG图标注册管理工具 - 依赖文件
+# 包含运行和打包所需的所有依赖
+# 注意：此工具仅支持Windows平台
+
+# 核心依赖
+# tkinter  # 通常随Python一起安装，无需单独安装
+
+# 进程管理依赖（用于检测和停止编辑器进程）
+psutil>=5.9.0
+
+# 打包依赖（可选）
+pyinstaller>=5.0.0
+
+# 注意：
+# 1. tkinter是Python标准库的一部分，通常无需安装
+# 2. psutil用于进程检测和管理，必须安装
+# 3. 如果只需要运行工具，可以不安装pyinstaller
+# 4. 如果需要打包exe文件，请安装pyinstaller
+# 5. 此工具仅支持Windows平台，不支持Linux/macOS
+# 6. 移除了未使用的svglib和reportlab依赖

@@ -1,0 +1,15 @@
+{
+  "timestamp": "20250827_101726",
+  "description": "重新注册图集",
+  "backup_name": "backup_20250827_101726_重新注册图集",
+  "files": [
+    {
+      "original": "F:\\Project\\UnrealEngine\\NEXBox\\Client\\Plugins\\UtilityExtend\\Source\\UtilityExtend\\Private\\UtilityExtendStyle.cpp",
+      "backup": "F:\\Project\\UnrealEngine\\NEXBox\\Client\\Plugins\\UtilityExtend\\Third\\SVGRegisterTool\\Backups\\backup_20250827_101726_重新注册图集_UtilityExtendStyle.cpp"
+    },
+    {
+      "original": "F:\\Project\\UnrealEngine\\NEXBox\\Client\\Plugins\\UtilityExtend\\Source\\UtilityExtend\\Private\\UtilityExtendIconRegistry.cpp",
+      "backup": "F:\\Project\\UnrealEngine\\NEXBox\\Client\\Plugins\\UtilityExtend\\Third\\SVGRegisterTool\\Backups\\backup_20250827_101726_重新注册图集_UtilityExtendIconRegistry.cpp"
+    }
+  ]
+}

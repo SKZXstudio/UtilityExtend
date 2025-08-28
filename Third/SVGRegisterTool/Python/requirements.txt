@@ -1,0 +1,13 @@
+# SVGRegisterTool Python依赖包
+# Python版本要求: 3.7+
+
+# 核心依赖
+# tkinter通常随Python一起安装，无需额外安装
+
+# 可选但推荐的包
+# 用于更好的文件处理
+pathlib2; python_version < "3.4"
+
+# 开发工具（可选）
+# pytest>=6.0.0
+# black>=21.0.0
