@@ -128,8 +128,8 @@ private:
     /** 初始化默认配置 */
     void InitializeDefaultConfig();
 
-    /** 解析INI配置文件 */
-    bool ParseConfigFile();
+    /** 解析JSON配置文件 */
+    bool ParseJsonConfigFile();
 
     /** 获取插件根目录路径 */
     FString GetPluginDirectory() const;

@@ -9,18 +9,7 @@ UUtilityExtendSettings::UUtilityExtendSettings()
 {
     CategoryName = TEXT("Plugins");
     
-    // 设置默认配置 - 如果配置文件中没有配置，则使用这些默认值
-    FToolbarButtonConfig DefaultConfig;
-    DefaultConfig.ButtonName = TEXT("Utility扩展工具箱");
-    DefaultConfig.ButtonType = EToolbarButtonType::DropdownButton;
-    DefaultConfig.ButtonIconName = FName("UtilityExtend.PluginAction");
-    
-    FToolbarDropdownItem DefaultItem;
-    DefaultItem.ItemName = TEXT("测试功能");
-    DefaultItem.BoundClass = nullptr;
-    DefaultConfig.DropdownItems.Add(DefaultItem);
-    
-    ToolbarButtonConfigs.Add(DefaultConfig);
+    // 不再使用硬编码的默认配置，让项目可以完全自定义按钮配置
 }
 
 UUtilityExtendSettings* UUtilityExtendSettings::Get()

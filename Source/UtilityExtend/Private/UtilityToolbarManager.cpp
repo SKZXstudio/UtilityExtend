@@ -146,12 +146,25 @@ void UUtilityToolbarManager::CreateSingleButton(const FToolbarButtonConfig& Butt
 
 void UUtilityToolbarManager::CreateDropdownButton(const FToolbarButtonConfig& ButtonConfig, FToolMenuSection& Section)
 {
+    UE_LOG(LogTemp, Log, TEXT("UtilityExtend: 开始创建下拉按钮: %s, 下拉项数量: %d"), 
+           *ButtonConfig.ButtonName, ButtonConfig.DropdownItems.Num());
+    
+    // 验证下拉项数据
+    for (int32 i = 0; i < ButtonConfig.DropdownItems.Num(); ++i)
+    {
+        const FToolbarDropdownItem& Item = ButtonConfig.DropdownItems[i];
+        UE_LOG(LogTemp, Log, TEXT("UtilityExtend: 下拉按钮[%s]下拉项[%d] - 名称: %s, 类: %s"), 
+               *ButtonConfig.ButtonName, i, *Item.ItemName, *Item.BoundClass.ToString());
+    }
+    
     // 创建下拉按钮
     FToolMenuEntry Entry = FToolMenuEntry::InitComboButton(
         FName(*ButtonConfig.ButtonName),
         FToolUIActionChoice(), // 空操作
         FNewToolMenuDelegate::CreateLambda([this, ButtonConfig](UToolMenu* Menu)
         {
+            UE_LOG(LogTemp, Log, TEXT("UtilityExtend: Lambda中创建下拉菜单: %s, 下拉项数量: %d"), 
+                   *ButtonConfig.ButtonName, ButtonConfig.DropdownItems.Num());
             this->CreateDropdownMenu(Menu, ButtonConfig);
         }),
         FText::FromString(ButtonConfig.ButtonName),
@@ -167,7 +180,7 @@ void UUtilityToolbarManager::CreateDropdownButton(const FToolbarButtonConfig& Bu
 
     Section.AddEntry(Entry);
     
-    UE_LOG(LogTemp, Log, TEXT("UtilityExtend: 创建下拉按钮: %s"), *ButtonConfig.ButtonName);
+    UE_LOG(LogTemp, Log, TEXT("UtilityExtend: 创建下拉按钮完成: %s"), *ButtonConfig.ButtonName);
 }
 
 UUtilityExtendTopBarButtonScript* UUtilityToolbarManager::CreateButtonInstance(const FString& ClassName)
@@ -254,21 +267,37 @@ void UUtilityToolbarManager::OnDropdownItemClicked(UUtilityExtendTopBarButtonScr
 
 void UUtilityToolbarManager::CreateDropdownMenu(UToolMenu* Menu, const FToolbarButtonConfig& ButtonConfig) const
 {
+    UE_LOG(LogTemp, Log, TEXT("UtilityExtend: 创建下拉菜单开始: %s, 下拉项数量: %d"), 
+           *ButtonConfig.ButtonName, ButtonConfig.DropdownItems.Num());
+    
     // 创建下拉菜单部分
     FToolMenuSection& Section = Menu->FindOrAddSection("DropdownItems");
     
     // 添加下拉项
-    for (const FToolbarDropdownItem& DropdownItem : ButtonConfig.DropdownItems)
+    for (int32 i = 0; i < ButtonConfig.DropdownItems.Num(); ++i)
     {
-        UE_LOG(LogTemp, Log, TEXT("UtilityExtend: 创建下拉项: %s"), *DropdownItem.ItemName);
+        const FToolbarDropdownItem& DropdownItem = ButtonConfig.DropdownItems[i];
+        UE_LOG(LogTemp, Log, TEXT("UtilityExtend: 创建下拉项[%d]: 名称='%s', 类='%s'"), 
+               i, *DropdownItem.ItemName, *DropdownItem.BoundClass.ToString());
+        
+        if (DropdownItem.ItemName.IsEmpty())
+        {
+            UE_LOG(LogTemp, Warning, TEXT("UtilityExtend: 跳过空名称的下拉项[%d]"), i);
+            continue;
+        }
         
         // 创建下拉项操作
         FUIAction ItemAction;
         ItemAction.ExecuteAction = FExecuteAction::CreateLambda([this, DropdownItem]()
         {
+            UE_LOG(LogTemp, Log, TEXT("UtilityExtend: 下拉项被点击: %s"), *DropdownItem.ItemName);
             if (UUtilityExtendTopBarButtonScript* ButtonScript = CreateButtonInstanceFromSoftClass(DropdownItem.BoundClass))
             {
                 this->OnDropdownItemClicked(ButtonScript);
+            }
+            else
+            {
+                UE_LOG(LogTemp, Warning, TEXT("UtilityExtend: 无法创建下拉项实例: %s"), *DropdownItem.ItemName);
             }
         });
         
@@ -282,7 +311,10 @@ void UUtilityToolbarManager::CreateDropdownMenu(UToolMenu* Menu, const FToolbarB
         );
         
         Section.AddEntry(MenuEntry);
+        UE_LOG(LogTemp, Log, TEXT("UtilityExtend: 下拉项创建成功: %s"), *DropdownItem.ItemName);
     }
+    
+    UE_LOG(LogTemp, Log, TEXT("UtilityExtend: 下拉菜单创建完成: %s"), *ButtonConfig.ButtonName);
 }
 
 FSlateIcon UUtilityToolbarManager::GetButtonIcon(const FToolbarButtonConfig& ButtonConfig)
@@ -318,8 +350,28 @@ TArray<FToolbarButtonConfig> UUtilityToolbarManager::GetMergedButtonConfigs() co
     UUtilityExtendPersistentSettings* PersistentSettings = UUtilityExtendPersistentSettings::Get();
     if (PersistentSettings)
     {
-        TArray<FToolbarButtonConfig> PersistentConfigs = PersistentSettings->GetPersistentButtonConfigs();
-        MergedConfigs.Append(PersistentConfigs);
+        const TArray<FToolbarButtonConfig>& PersistentConfigs = PersistentSettings->GetPersistentButtonConfigs();
+        UE_LOG(LogTemp, Log, TEXT("UtilityExtend: 获取到 %d 个持久化按钮配置"), PersistentConfigs.Num());
+        
+        // 逐个添加配置并验证数据完整性
+        for (int32 i = 0; i < PersistentConfigs.Num(); ++i)
+        {
+            const FToolbarButtonConfig& Config = PersistentConfigs[i];
+            UE_LOG(LogTemp, Log, TEXT("UtilityExtend: 持久化配置[%d] - 名称: %s, 类型: %d, 下拉项数量: %d"), 
+                   i, *Config.ButtonName, (int32)Config.ButtonType, Config.DropdownItems.Num());
+            
+            // 验证下拉项数据
+            for (int32 j = 0; j < Config.DropdownItems.Num(); ++j)
+            {
+                const FToolbarDropdownItem& Item = Config.DropdownItems[j];
+                UE_LOG(LogTemp, Log, TEXT("UtilityExtend: 持久化配置[%d]下拉项[%d] - 名称: %s, 类: %s"), 
+                       i, j, *Item.ItemName, *Item.BoundClass.ToString());
+            }
+            
+            // 添加到合并配置中
+            MergedConfigs.Add(Config);
+        }
+        
         UE_LOG(LogTemp, Log, TEXT("UtilityExtend: 添加了 %d 个持久化按钮配置"), PersistentConfigs.Num());
     }
     
@@ -333,6 +385,15 @@ TArray<FToolbarButtonConfig> UUtilityToolbarManager::GetMergedButtonConfigs() co
     }
     
     UE_LOG(LogTemp, Log, TEXT("UtilityExtend: 总共合并了 %d 个按钮配置"), MergedConfigs.Num());
+    
+    // 验证合并后的配置
+    for (int32 i = 0; i < MergedConfigs.Num(); ++i)
+    {
+        const FToolbarButtonConfig& Config = MergedConfigs[i];
+        UE_LOG(LogTemp, Log, TEXT("UtilityExtend: 合并配置[%d] - 名称: %s, 类型: %d, 下拉项数量: %d"), 
+               i, *Config.ButtonName, (int32)Config.ButtonType, Config.DropdownItems.Num());
+    }
+    
     return MergedConfigs;
 }
 

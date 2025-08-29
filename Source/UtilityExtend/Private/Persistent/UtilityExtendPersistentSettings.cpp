@@ -8,14 +8,17 @@
 #include "Misc/FileHelper.h"
 #include "Engine/World.h"
 #include "TimerManager.h"
+#include "Dom/JsonObject.h"
+#include "Serialization/JsonSerializer.h"
+#include "Serialization/JsonWriter.h"
 
 UUtilityExtendPersistentSettings::UUtilityExtendPersistentSettings()
 {
     // 设置类别名称，使其显示在项目设置的"插件"分类下
     CategoryName = TEXT("Plugins");
     
-    // 获取插件配置文件路径
-    PluginConfigPath = GetPluginDirectory() / TEXT("Config") / TEXT("DefaultUtilityExtendPersistent.ini");
+    // 获取插件配置文件路径 - 改为JSON格式
+    PluginConfigPath = GetPluginDirectory() / TEXT("Config") / TEXT("DefaultUtilityExtendPersistent.json");
     
     // 不在构造函数中初始化配置，等待PostInitProperties调用
 }
@@ -58,19 +61,52 @@ void UUtilityExtendPersistentSettings::Shutdown()
 UUtilityExtendPersistentSettings* UUtilityExtendPersistentSettings::Get()
 {
     // 使用UDeveloperSettings的标准获取方法
-    return GetMutableDefault<UUtilityExtendPersistentSettings>();
+    UUtilityExtendPersistentSettings* Settings = GetMutableDefault<UUtilityExtendPersistentSettings>();
+    
+    // 强制确保配置已加载
+    if (Settings && Settings->PersistentButtonConfigs.Num() == 0)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("UtilityExtend: 持久化配置为空，强制重新加载"));
+        
+        // 重新初始化插件配置路径
+        Settings->PluginConfigPath = Settings->GetPluginDirectory() / TEXT("Config") / TEXT("DefaultUtilityExtendPersistent.json");
+        UE_LOG(LogTemp, Log, TEXT("UtilityExtend: 重新设置配置文件路径: %s"), *Settings->PluginConfigPath);
+        
+        // 强制从插件配置文件加载
+        bool bLoadSuccess = Settings->LoadFromPluginConfig();
+        if (!bLoadSuccess)
+        {
+            UE_LOG(LogTemp, Warning, TEXT("UtilityExtend: 强制加载失败，使用默认配置"));
+            Settings->InitializeDefaultConfig();
+        }
+    }
+    
+    return Settings;
 }
 
 FString UUtilityExtendPersistentSettings::GetPluginDirectory() const
 {
-    // 获取插件管理器
+    // 首先尝试通过插件管理器获取
     TSharedPtr<IPlugin> Plugin = IPluginManager::Get().FindPlugin("UtilityExtend");
     if (Plugin.IsValid())
     {
-        return Plugin->GetBaseDir();
+        FString PluginDir = Plugin->GetBaseDir();
+        UE_LOG(LogTemp, Log, TEXT("UtilityExtend: 通过插件管理器获取到插件目录: %s"), *PluginDir);
+        return PluginDir;
     }
     
-    UE_LOG(LogTemp, Error, TEXT("UtilityExtend: 无法找到插件目录"));
+    // 如果插件管理器失败，使用硬编码的绝对路径作为后备方案
+    FString FallbackPath = TEXT("D:/Apps/Epic Games/UE/UE_S/Engine/Plugins/VDK/Editor/UtilityExtend");
+    UE_LOG(LogTemp, Warning, TEXT("UtilityExtend: 插件管理器获取插件目录失败，使用后备路径: %s"), *FallbackPath);
+    
+    // 验证后备路径是否存在
+    if (FPlatformFileManager::Get().GetPlatformFile().DirectoryExists(*FallbackPath))
+    {
+        UE_LOG(LogTemp, Log, TEXT("UtilityExtend: 后备路径验证成功"));
+        return FallbackPath;
+    }
+    
+    UE_LOG(LogTemp, Error, TEXT("UtilityExtend: 后备路径也不存在，无法找到插件目录"));
     return FString();
 }
 
@@ -104,23 +140,50 @@ void UUtilityExtendPersistentSettings::ClearPersistentButtonConfigs()
 
 bool UUtilityExtendPersistentSettings::LoadFromPluginConfig()
 {
+    UE_LOG(LogTemp, Log, TEXT("UtilityExtend: 开始加载插件配置文件"));
+    
     if (PluginConfigPath.IsEmpty())
     {
-        UE_LOG(LogTemp, Warning, TEXT("UtilityExtend: 插件配置文件路径为空"));
-        return false;
+        UE_LOG(LogTemp, Warning, TEXT("UtilityExtend: 插件配置文件路径为空，尝试重新获取"));
+        PluginConfigPath = GetPluginDirectory() / TEXT("Config") / TEXT("DefaultUtilityExtendPersistent.json");
+        UE_LOG(LogTemp, Log, TEXT("UtilityExtend: 重新设置配置文件路径: %s"), *PluginConfigPath);
     }
 
     // 检查配置文件是否存在
     if (!FPlatformFileManager::Get().GetPlatformFile().FileExists(*PluginConfigPath))
     {
         UE_LOG(LogTemp, Warning, TEXT("UtilityExtend: 插件配置文件不存在: %s"), *PluginConfigPath);
+        
+        // 尝试检查插件目录是否存在
+        FString PluginDir = GetPluginDirectory();
+        if (PluginDir.IsEmpty())
+        {
+            UE_LOG(LogTemp, Error, TEXT("UtilityExtend: 插件目录获取失败"));
+        }
+        else
+        {
+            UE_LOG(LogTemp, Log, TEXT("UtilityExtend: 插件目录: %s"), *PluginDir);
+            FString ConfigDir = PluginDir / TEXT("Config");
+            if (FPlatformFileManager::Get().GetPlatformFile().DirectoryExists(*ConfigDir))
+            {
+                UE_LOG(LogTemp, Log, TEXT("UtilityExtend: Config目录存在: %s"), *ConfigDir);
+            }
+            else
+            {
+                UE_LOG(LogTemp, Error, TEXT("UtilityExtend: Config目录不存在: %s"), *ConfigDir);
+            }
+        }
+        
         return false;
     }
 
-    // 解析配置文件
-    bool bSuccess = ParseConfigFile();
+    UE_LOG(LogTemp, Log, TEXT("UtilityExtend: 找到JSON配置文件，开始解析: %s"), *PluginConfigPath);
+
+    // 解析JSON配置文件
+    bool bSuccess = ParseJsonConfigFile();
     
-    UE_LOG(LogTemp, Log, TEXT("UtilityExtend: 从插件配置文件加载完成，按钮数量: %d"), PersistentButtonConfigs.Num());
+    UE_LOG(LogTemp, Log, TEXT("UtilityExtend: 从插件配置文件加载完成，解析结果: %s，按钮数量: %d"), 
+           bSuccess ? TEXT("成功") : TEXT("失败"), PersistentButtonConfigs.Num());
     return bSuccess;
 }
 
@@ -141,108 +204,73 @@ bool UUtilityExtendPersistentSettings::SaveToPluginConfig()
 
     // 备份功能已移除 - 直接保存配置文件
 
-    // 创建配置对象
-    FConfigFile ConfigFile;
-    
-    // 如果文件已存在，先读取现有内容
-    if (FPlatformFileManager::Get().GetPlatformFile().FileExists(*PluginConfigPath))
-    {
-        ConfigFile.Read(PluginConfigPath);
-    }
+    // 创建JSON对象
+    TSharedPtr<FJsonObject> RootObject = MakeShareable(new FJsonObject);
+    TArray<TSharedPtr<FJsonValue>> ButtonConfigsArray;
 
-    // 获取或创建配置部分
-    const FString ConfigSectionName = TEXT("/Script/UtilityExtend.UtilityExtendPersistentSettings");
-    FConfigSection* ConfigSection = const_cast<FConfigSection*>(ConfigFile.FindOrAddConfigSection(*ConfigSectionName));
-    if (!ConfigSection)
+    // 将按钮配置转换为JSON
+    for (const FToolbarButtonConfig& Config : PersistentButtonConfigs)
     {
-        UE_LOG(LogTemp, Error, TEXT("UtilityExtend: 无法创建配置文件部分"));
-        return false;
-    }
-    
-    // 清空现有的按钮配置
-    TArray<FName> KeysToRemove;
-    for (auto& ConfigPair : *ConfigSection)
-    {
-        FString KeyString = ConfigPair.Key.ToString();
-        if (KeyString.StartsWith(TEXT("PersistentButtonConfigs")) || KeyString == TEXT("+PersistentButtonConfigs"))
-        {
-            KeysToRemove.Add(ConfigPair.Key);
-        }
-    }
-    for (const FName& Key : KeysToRemove)
-    {
-        ConfigSection->Remove(Key);
-    }
-
-    // 保存按钮配置（使用 + 前缀，这是UE的数组配置格式）
-    for (int32 i = 0; i < PersistentButtonConfigs.Num(); ++i)
-    {
-        const FToolbarButtonConfig& Config = PersistentButtonConfigs[i];
+        TSharedPtr<FJsonObject> ConfigObject = MakeShareable(new FJsonObject);
         
-        // 获取按钮类型字符串
-        FString ButtonTypeString;
-        if (Config.ButtonType == EToolbarButtonType::SingleButton)
-        {
-            ButtonTypeString = TEXT("SingleButton");
-        }
-        else if (Config.ButtonType == EToolbarButtonType::DropdownButton)
-        {
-            ButtonTypeString = TEXT("DropdownButton");
-        }
+        ConfigObject->SetStringField(TEXT("ButtonName"), Config.ButtonName);
+        ConfigObject->SetStringField(TEXT("ButtonType"), Config.ButtonType == EToolbarButtonType::SingleButton ? TEXT("SingleButton") : TEXT("DropdownButton"));
+        ConfigObject->SetStringField(TEXT("ButtonIconName"), Config.ButtonIconName.ToString());
+        ConfigObject->SetBoolField(TEXT("bShowButtonText"), Config.bShowButtonText);
         
-        // 构建下拉项字符串
-        FString DropdownItemsString = TEXT("");
-        if (Config.ButtonType == EToolbarButtonType::DropdownButton && Config.DropdownItems.Num() > 0)
-        {
-            TArray<FString> ItemStrings;
-            for (const FToolbarDropdownItem& Item : Config.DropdownItems)
-            {
-                FString BoundClassString = TEXT("None");
-                if (Item.BoundClass.IsValid())
-                {
-                    BoundClassString = Item.BoundClass.ToString();
-                }
-                
-                FString ItemString = FString::Printf(TEXT("(ItemName=\"%s\",BoundClass=\"%s\")"),
-                    *Item.ItemName,
-                    *BoundClassString
-                );
-                ItemStrings.Add(ItemString);
-            }
-            DropdownItemsString = FString::Printf(TEXT(",DropdownItems=(%s)"), *FString::Join(ItemStrings, TEXT(",")));
-        }
-        
-        // 获取单个按钮的绑定类字符串
-        FString SingleButtonBoundClassString = TEXT("None");
+        // 单按钮绑定类
         if (Config.BoundClass.IsValid())
         {
-            SingleButtonBoundClassString = Config.BoundClass.ToString();
+            ConfigObject->SetStringField(TEXT("BoundClass"), Config.BoundClass.ToString());
+        }
+        else
+        {
+            ConfigObject->SetStringField(TEXT("BoundClass"), TEXT("None"));
         }
         
-        // 构建配置字符串
-        FString ConfigValue = FString::Printf(TEXT("(ButtonName=\"%s\",ButtonType=%s,BoundClass=\"%s\",ButtonIconName=\"%s\",bShowButtonText=%s%s)"),
-            *Config.ButtonName,
-            *ButtonTypeString,
-            *SingleButtonBoundClassString,
-            *Config.ButtonIconName.ToString(),
-            Config.bShowButtonText ? TEXT("true") : TEXT("false"),
-            *DropdownItemsString
-        );
+        // 下拉项
+        if (Config.ButtonType == EToolbarButtonType::DropdownButton)
+        {
+            TArray<TSharedPtr<FJsonValue>> DropdownItemsArray;
+            for (const FToolbarDropdownItem& Item : Config.DropdownItems)
+            {
+                TSharedPtr<FJsonObject> ItemObject = MakeShareable(new FJsonObject);
+                ItemObject->SetStringField(TEXT("ItemName"), Item.ItemName);
+                
+                if (Item.BoundClass.IsValid())
+                {
+                    ItemObject->SetStringField(TEXT("BoundClass"), Item.BoundClass.ToString());
+                }
+                else
+                {
+                    ItemObject->SetStringField(TEXT("BoundClass"), TEXT("None"));
+                }
+                
+                DropdownItemsArray.Add(MakeShareable(new FJsonValueObject(ItemObject)));
+            }
+            ConfigObject->SetArrayField(TEXT("DropdownItems"), DropdownItemsArray);
+        }
         
-        // 使用 + 前缀添加数组元素
-        ConfigSection->AddUnique(TEXT("+PersistentButtonConfigs"), *ConfigValue);
+        ButtonConfigsArray.Add(MakeShareable(new FJsonValueObject(ConfigObject)));
     }
 
-    // 保存文件
-    bool bSaved = ConfigFile.Write(PluginConfigPath);
+    RootObject->SetArrayField(TEXT("PersistentButtonConfigs"), ButtonConfigsArray);
+
+    // 序列化JSON到字符串
+    FString OutputString;
+    TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&OutputString);
+    FJsonSerializer::Serialize(RootObject.ToSharedRef(), Writer);
+
+    // 保存到文件
+    bool bSaved = FFileHelper::SaveStringToFile(OutputString, *PluginConfigPath, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM);
     
     if (bSaved)
     {
-        UE_LOG(LogTemp, Log, TEXT("UtilityExtend: 配置已成功保存到插件配置文件: %s"), *PluginConfigPath);
+        UE_LOG(LogTemp, Log, TEXT("UtilityExtend: 持久化配置已保存到JSON文件: %s"), *PluginConfigPath);
     }
     else
     {
-        UE_LOG(LogTemp, Error, TEXT("UtilityExtend: 保存插件配置文件失败: %s"), *PluginConfigPath);
+        UE_LOG(LogTemp, Error, TEXT("UtilityExtend: 无法保存持久化配置到JSON文件: %s"), *PluginConfigPath);
     }
     
     return bSaved;
@@ -256,57 +284,100 @@ void UUtilityExtendPersistentSettings::ReloadConfig()
     UE_LOG(LogTemp, Log, TEXT("UtilityExtend: 持久化配置重新加载完成"));
 }
 
-bool UUtilityExtendPersistentSettings::ParseConfigFile()
+bool UUtilityExtendPersistentSettings::ParseJsonConfigFile()
 {
-    // 创建临时配置对象来解析INI文件
-    FConfigFile ConfigFile;
-    
-    // 加载INI文件
-    ConfigFile.Read(PluginConfigPath);
-    
-    // 检查文件是否成功加载（通过检查是否有任何部分）
-    if (ConfigFile.Num() == 0)
+    // 读取JSON文件内容
+    FString JsonString;
+    if (!FFileHelper::LoadFileToString(JsonString, *PluginConfigPath))
     {
-        UE_LOG(LogTemp, Error, TEXT("UtilityExtend: 无法读取插件配置文件或文件为空: %s"), *PluginConfigPath);
+        UE_LOG(LogTemp, Error, TEXT("UtilityExtend: 无法读取JSON配置文件: %s"), *PluginConfigPath);
         return false;
     }
 
-    // 清空现有配置
-    PersistentButtonConfigs.Empty();
-
-    // 获取配置部分
-    const FConfigSection* ConfigSection = ConfigFile.FindSection(TEXT("/Script/UtilityExtend.UtilityExtendPersistentSettings"));
-    if (!ConfigSection)
+    // 解析JSON
+    TSharedPtr<FJsonObject> JsonObject;
+    TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(JsonString);
+    
+    if (!FJsonSerializer::Deserialize(Reader, JsonObject) || !JsonObject.IsValid())
     {
-        UE_LOG(LogTemp, Warning, TEXT("UtilityExtend: 配置文件中未找到持久化设置部分"));
+        UE_LOG(LogTemp, Error, TEXT("UtilityExtend: JSON配置文件解析失败: %s"), *PluginConfigPath);
         return false;
     }
 
-    // 解析按钮配置
-    for (auto& ConfigPair : *ConfigSection)
+    // 获取按钮配置数组
+    const TArray<TSharedPtr<FJsonValue>>* ButtonConfigsArray;
+    if (!JsonObject->TryGetArrayField(TEXT("PersistentButtonConfigs"), ButtonConfigsArray))
     {
-        FString Key = ConfigPair.Key.ToString();
-        if (Key == TEXT("+PersistentButtonConfigs") || Key.StartsWith(TEXT("PersistentButtonConfigs")))
+        UE_LOG(LogTemp, Warning, TEXT("UtilityExtend: JSON配置文件中未找到PersistentButtonConfigs字段"));
+        return false;
+    }
+
+    // 先解析到临时数组，确保所有数据都正确后再替换
+    TArray<FToolbarButtonConfig> NewConfigs;
+
+    // 解析每个按钮配置
+    for (const TSharedPtr<FJsonValue>& Value : *ButtonConfigsArray)
+    {
+        TSharedPtr<FJsonObject> ConfigObject = Value->AsObject();
+        if (!ConfigObject.IsValid())
         {
-            // 解析按钮配置字符串
-            FString ConfigValue = ConfigPair.Value.GetValue();
-            UE_LOG(LogTemp, Log, TEXT("UtilityExtend: 解析按钮配置 - Key: %s, Value: %s"), *Key, *ConfigValue);
-            
-            // 解析配置字符串
-            FToolbarButtonConfig ParsedConfig;
-            if (ParseButtonConfigFromString(ConfigValue, ParsedConfig))
+            continue;
+        }
+
+        FToolbarButtonConfig ParsedConfig;
+        
+        // 解析基本字段
+        ParsedConfig.ButtonName = ConfigObject->GetStringField(TEXT("ButtonName"));
+        
+        FString ButtonTypeString = ConfigObject->GetStringField(TEXT("ButtonType"));
+        ParsedConfig.ButtonType = (ButtonTypeString == TEXT("SingleButton")) ? EToolbarButtonType::SingleButton : EToolbarButtonType::DropdownButton;
+        
+        ParsedConfig.ButtonIconName = FName(*ConfigObject->GetStringField(TEXT("ButtonIconName")));
+        ParsedConfig.bShowButtonText = ConfigObject->GetBoolField(TEXT("bShowButtonText"));
+        
+        // 解析单按钮绑定类
+        FString BoundClassString = ConfigObject->GetStringField(TEXT("BoundClass"));
+        if (BoundClassString != TEXT("None") && !BoundClassString.IsEmpty())
+        {
+            ParsedConfig.BoundClass = TSoftClassPtr<UUtilityExtendTopBarButtonScript>(FSoftObjectPath(BoundClassString));
+        }
+        
+        // 解析下拉项
+        if (ParsedConfig.ButtonType == EToolbarButtonType::DropdownButton)
+        {
+            const TArray<TSharedPtr<FJsonValue>>* DropdownItemsArray;
+            if (ConfigObject->TryGetArrayField(TEXT("DropdownItems"), DropdownItemsArray))
             {
-                PersistentButtonConfigs.Add(ParsedConfig);
-                UE_LOG(LogTemp, Log, TEXT("UtilityExtend: 成功解析按钮配置: %s"), *ParsedConfig.ButtonName);
-            }
-            else
-            {
-                UE_LOG(LogTemp, Warning, TEXT("UtilityExtend: 解析按钮配置失败: %s"), *ConfigValue);
+                for (const TSharedPtr<FJsonValue>& ItemValue : *DropdownItemsArray)
+                {
+                    TSharedPtr<FJsonObject> ItemObject = ItemValue->AsObject();
+                    if (!ItemObject.IsValid())
+                    {
+                        continue;
+                    }
+
+                    FToolbarDropdownItem DropdownItem;
+                    DropdownItem.ItemName = ItemObject->GetStringField(TEXT("ItemName"));
+                    
+                    FString ItemBoundClassString = ItemObject->GetStringField(TEXT("BoundClass"));
+                    if (ItemBoundClassString != TEXT("None") && !ItemBoundClassString.IsEmpty())
+                    {
+                        DropdownItem.BoundClass = TSoftClassPtr<UUtilityExtendTopBarButtonScript>(FSoftObjectPath(ItemBoundClassString));
+                    }
+                    
+                    ParsedConfig.DropdownItems.Add(DropdownItem);
+                }
             }
         }
+        
+        NewConfigs.Add(ParsedConfig);
+        UE_LOG(LogTemp, Log, TEXT("UtilityExtend: 成功解析JSON按钮配置: %s"), *ParsedConfig.ButtonName);
     }
 
-    UE_LOG(LogTemp, Log, TEXT("UtilityExtend: 配置文件解析完成，共加载 %d 个按钮配置"), PersistentButtonConfigs.Num());
+    // 只有在完全成功解析后才替换现有配置
+    PersistentButtonConfigs = MoveTemp(NewConfigs);
+    
+    UE_LOG(LogTemp, Log, TEXT("UtilityExtend: JSON配置文件解析完成，共加载 %d 个按钮配置"), PersistentButtonConfigs.Num());
     return true;
 }
 
