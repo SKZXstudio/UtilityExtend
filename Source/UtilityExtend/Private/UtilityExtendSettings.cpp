@@ -37,15 +37,36 @@ bool FToolbarDropdownItem::Serialize(FArchive& Ar)
     // 序列化ItemName
     Ar << ItemName;
     
-    // 自定义处理BoundClass的序列化
+    // 自定义处理BoundClass的序列化 - 修复清空问题
     if (Ar.IsSaving())
     {
         // 保存时，将BoundClass转换为字符串路径
-        FString ClassPath = BoundClass.IsValid() ? BoundClass.ToString() : TEXT("None");
+        // 🔧 关键修复：保持原有路径，除非明确设置为None
+        FString ClassPath;
+        if (BoundClass.IsValid())
+        {
+            ClassPath = BoundClass.ToString();
+        }
+        else if (BoundClass.IsNull())
+        {
+            // 明确设置为null时才保存为None
+            ClassPath = TEXT("None");
+        }
+        else
+        {
+            // 未加载状态，保持现有路径
+            ClassPath = BoundClass.ToSoftObjectPath().ToString();
+            if (ClassPath.IsEmpty())
+            {
+                ClassPath = TEXT("None");
+            }
+        }
+        
         Ar << ClassPath;
         
-        UE_LOG(LogTemp, VeryVerbose, TEXT("UtilityExtend: 序列化保存下拉项 '%s', BoundClass='%s'"), 
-               *ItemName, *ClassPath);
+        UE_LOG(LogTemp, VeryVerbose, TEXT("UtilityExtend: 序列化保存下拉项 '%s', BoundClass='%s' (Valid:%s, Null:%s)"), 
+               *ItemName, *ClassPath, BoundClass.IsValid() ? TEXT("true") : TEXT("false"),
+               BoundClass.IsNull() ? TEXT("true") : TEXT("false"));
     }
     else if (Ar.IsLoading())
     {
@@ -72,13 +93,33 @@ bool FToolbarDropdownItem::Serialize(FArchive& Ar)
 bool FToolbarDropdownItem::ExportTextItem(FString& ValueStr, FToolbarDropdownItem const& DefaultValue, UObject* Parent, int32 PortFlags, UObject* ExportRootScope) const
 {
     // 构建导出字符串格式: (ItemName="名称",BoundClass="路径")
-    FString BoundClassStr = BoundClass.IsValid() ? BoundClass.ToString() : TEXT("None");
+    // 🔧 修复导出时的BoundClass清空问题
+    FString BoundClassStr;
+    if (BoundClass.IsValid())
+    {
+        BoundClassStr = BoundClass.ToString();
+    }
+    else if (BoundClass.IsNull())
+    {
+        BoundClassStr = TEXT("None");
+    }
+    else
+    {
+        // 未加载状态，保持原路径
+        BoundClassStr = BoundClass.ToSoftObjectPath().ToString();
+        if (BoundClassStr.IsEmpty())
+        {
+            BoundClassStr = TEXT("None");
+        }
+    }
     
     ValueStr = FString::Printf(TEXT("(ItemName=\"%s\",BoundClass=\"%s\")"), 
                               *ItemName, 
                               *BoundClassStr);
     
-    UE_LOG(LogTemp, VeryVerbose, TEXT("UtilityExtend: 导出下拉项配置: %s"), *ValueStr);
+    UE_LOG(LogTemp, VeryVerbose, TEXT("UtilityExtend: 导出下拉项配置: %s (Valid:%s, Null:%s)"), 
+           *ValueStr, BoundClass.IsValid() ? TEXT("true") : TEXT("false"),
+           BoundClass.IsNull() ? TEXT("true") : TEXT("false"));
     return true;
 }
 

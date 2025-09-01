@@ -125,8 +125,7 @@ public:
     virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 
 private:
-    /** 初始化默认配置 */
-    void InitializeDefaultConfig();
+
 
     /** 解析JSON配置文件 */
     bool ParseJsonConfigFile();

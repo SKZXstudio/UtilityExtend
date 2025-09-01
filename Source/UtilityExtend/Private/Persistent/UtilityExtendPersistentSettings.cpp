@@ -63,22 +63,10 @@ UUtilityExtendPersistentSettings* UUtilityExtendPersistentSettings::Get()
     // 使用UDeveloperSettings的标准获取方法
     UUtilityExtendPersistentSettings* Settings = GetMutableDefault<UUtilityExtendPersistentSettings>();
     
-    // 强制确保配置已加载
+    // 配置为空是正常的，用户可以从空白开始配置
     if (Settings && Settings->PersistentButtonConfigs.Num() == 0)
     {
-        UE_LOG(LogTemp, Warning, TEXT("UtilityExtend: 持久化配置为空，强制重新加载"));
-        
-        // 重新初始化插件配置路径
-        Settings->PluginConfigPath = Settings->GetPluginDirectory() / TEXT("Config") / TEXT("DefaultUtilityExtendPersistent.json");
-        UE_LOG(LogTemp, Log, TEXT("UtilityExtend: 重新设置配置文件路径: %s"), *Settings->PluginConfigPath);
-        
-        // 强制从插件配置文件加载
-        bool bLoadSuccess = Settings->LoadFromPluginConfig();
-        if (!bLoadSuccess)
-        {
-            UE_LOG(LogTemp, Warning, TEXT("UtilityExtend: 强制加载失败，使用默认配置"));
-            Settings->InitializeDefaultConfig();
-        }
+        UE_LOG(LogTemp, Log, TEXT("UtilityExtend: 持久化配置为空，这是正常的初始状态"));
     }
     
     return Settings;
@@ -218,15 +206,26 @@ bool UUtilityExtendPersistentSettings::SaveToPluginConfig()
         ConfigObject->SetStringField(TEXT("ButtonIconName"), Config.ButtonIconName.ToString());
         ConfigObject->SetBoolField(TEXT("bShowButtonText"), Config.bShowButtonText);
         
-        // 单按钮绑定类
+        // 单按钮绑定类 - 🔧 修复保存时被清空的问题
+        FString ButtonBoundClassStr;
         if (Config.BoundClass.IsValid())
         {
-            ConfigObject->SetStringField(TEXT("BoundClass"), Config.BoundClass.ToString());
+            ButtonBoundClassStr = Config.BoundClass.ToString();
+        }
+        else if (Config.BoundClass.IsNull())
+        {
+            ButtonBoundClassStr = TEXT("None");
         }
         else
         {
-            ConfigObject->SetStringField(TEXT("BoundClass"), TEXT("None"));
+            // 未加载状态，保持原路径
+            ButtonBoundClassStr = Config.BoundClass.ToSoftObjectPath().ToString();
+            if (ButtonBoundClassStr.IsEmpty())
+            {
+                ButtonBoundClassStr = TEXT("None");
+            }
         }
+        ConfigObject->SetStringField(TEXT("BoundClass"), ButtonBoundClassStr);
         
         // 下拉项
         if (Config.ButtonType == EToolbarButtonType::DropdownButton)
@@ -237,14 +236,26 @@ bool UUtilityExtendPersistentSettings::SaveToPluginConfig()
                 TSharedPtr<FJsonObject> ItemObject = MakeShareable(new FJsonObject);
                 ItemObject->SetStringField(TEXT("ItemName"), Item.ItemName);
                 
+                // 🔧 修复JSON保存时BoundClass被清空的问题
+                FString BoundClassStr;
                 if (Item.BoundClass.IsValid())
                 {
-                    ItemObject->SetStringField(TEXT("BoundClass"), Item.BoundClass.ToString());
+                    BoundClassStr = Item.BoundClass.ToString();
+                }
+                else if (Item.BoundClass.IsNull())
+                {
+                    BoundClassStr = TEXT("None");
                 }
                 else
                 {
-                    ItemObject->SetStringField(TEXT("BoundClass"), TEXT("None"));
+                    // 未加载状态，保持原路径
+                    BoundClassStr = Item.BoundClass.ToSoftObjectPath().ToString();
+                    if (BoundClassStr.IsEmpty())
+                    {
+                        BoundClassStr = TEXT("None");
+                    }
                 }
+                ItemObject->SetStringField(TEXT("BoundClass"), BoundClassStr);
                 
                 DropdownItemsArray.Add(MakeShareable(new FJsonValueObject(ItemObject)));
             }
@@ -278,10 +289,19 @@ bool UUtilityExtendPersistentSettings::SaveToPluginConfig()
 
 void UUtilityExtendPersistentSettings::ReloadConfig()
 {
-    // 重新加载配置
-    InitializeDefaultConfig();
-    LoadFromPluginConfig();
-    UE_LOG(LogTemp, Log, TEXT("UtilityExtend: 持久化配置重新加载完成"));
+    UE_LOG(LogTemp, Log, TEXT("UtilityExtend: 开始重新加载持久化配置"));
+    
+    // 尝试从JSON文件加载配置
+    bool bLoadSuccess = LoadFromPluginConfig();
+    
+    if (bLoadSuccess)
+    {
+        UE_LOG(LogTemp, Log, TEXT("UtilityExtend: 配置重新加载成功，当前按钮数量: %d"), PersistentButtonConfigs.Num());
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("UtilityExtend: 重新加载配置失败，保持当前配置不变"));
+    }
 }
 
 bool UUtilityExtendPersistentSettings::ParseJsonConfigFile()
@@ -381,33 +401,7 @@ bool UUtilityExtendPersistentSettings::ParseJsonConfigFile()
     return true;
 }
 
-void UUtilityExtendPersistentSettings::InitializeDefaultConfig()
-{
-    // 清空配置数组
-    PersistentButtonConfigs.Empty();
-    
-    // 添加默认的持久化按钮配置
-    FToolbarButtonConfig DefaultConfig;
-    DefaultConfig.ButtonName = TEXT("插件工具箱");
-    DefaultConfig.ButtonType = EToolbarButtonType::DropdownButton;
-    DefaultConfig.ButtonIconName = FName("工具箱");
-    DefaultConfig.bShowButtonText = true; // 默认显示按钮文本
-    
-    // 添加下拉项
-    FToolbarDropdownItem Item1;
-    Item1.ItemName = TEXT("插件信息");
-    Item1.BoundClass = nullptr;
-    DefaultConfig.DropdownItems.Add(Item1);
-    
-    FToolbarDropdownItem Item2;
-    Item2.ItemName = TEXT("插件设置");
-    Item2.BoundClass = nullptr;
-    DefaultConfig.DropdownItems.Add(Item2);
-    
-    PersistentButtonConfigs.Add(DefaultConfig);
-    
-    UE_LOG(LogTemp, Log, TEXT("UtilityExtend: 默认持久化配置初始化完成"));
-}
+
 
 TArray<FName> UUtilityExtendPersistentSettings::GetPersistentIconNames() const
 {
@@ -466,22 +460,12 @@ void UUtilityExtendPersistentSettings::PostInitProperties()
 {
     Super::PostInitProperties();
     
-    // 清空现有配置
-    PersistentButtonConfigs.Empty();
-    
     // 尝试从插件配置文件加载数据
     bool bLoadedFromFile = LoadFromPluginConfig();
     
-    // 如果没有从文件加载到数据，使用默认配置
-    if (!bLoadedFromFile || PersistentButtonConfigs.Num() == 0)
-    {
-        UE_LOG(LogTemp, Warning, TEXT("UtilityExtend: 未能从配置文件加载数据，使用默认配置"));
-        InitializeDefaultConfig();
-    }
-    
     // 记录初始化完成
-    UE_LOG(LogTemp, Log, TEXT("UtilityExtend: 持久化设置初始化完成，配置文件: %s，按钮数量: %d"), 
-           *PluginConfigPath, PersistentButtonConfigs.Num());
+    UE_LOG(LogTemp, Log, TEXT("UtilityExtend: 持久化设置初始化完成，配置文件: %s，按钮数量: %d，加载成功: %s"), 
+           *PluginConfigPath, PersistentButtonConfigs.Num(), bLoadedFromFile ? TEXT("是") : TEXT("否"));
 }
 
 void UUtilityExtendPersistentSettings::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
