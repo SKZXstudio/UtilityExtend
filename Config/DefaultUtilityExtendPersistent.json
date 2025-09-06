@@ -13,7 +13,7 @@
 				},
 				{
 					"ItemName": "顶部工具栏图标注册工具",
-					"BoundClass": "/UtilityExtend/Blueprint/ButtonScript/BS_TopBarBtnIconRegTool.BS_TopBarBtnIconRegTool_C"
+					"BoundClass": "/UtilityExtend/Blueprint/ButtonScript/IconRegTool/BS_TopBarBtnIconRegTool.BS_TopBarBtnIconRegTool_C"
 				},
 				{
 					"ItemName": "游戏存档编辑器",

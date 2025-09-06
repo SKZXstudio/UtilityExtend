@@ -115,4 +115,85 @@ public:
         UPARAM(DisplayName = "进程名称") const FString& ProcessName, 
         UPARAM(DisplayName = "超时时间") float TimeoutSeconds = 30.0f
     );
+
+    // 文件读写相关函数
+    UFUNCTION(BlueprintCallable, meta = (
+        DisplayName = "Read Text File", 
+        Keywords = "读取文本文件 读文件 文本读取",
+        ToolTip = "从指定路径读取文本文件内容，支持相对路径和绝对路径",
+        Category = "UtilityExtend|FileIO"
+    ))
+    static UPARAM(DisplayName = "读取成功") bool ReadTextFile(
+        UPARAM(DisplayName = "文件路径") const FString& FilePath,
+        UPARAM(DisplayName = "文件内容") FString& OutContent,
+        UPARAM(DisplayName = "错误信息") FString& OutErrorMessage
+    );
+
+    UFUNCTION(BlueprintCallable, meta = (
+        DisplayName = "Write Text File", 
+        Keywords = "写入文本文件 保存文件 文本写入",
+        ToolTip = "将文本内容保存到指定路径的文件，支持创建目录和覆盖文件",
+        Category = "UtilityExtend|FileIO"
+    ))
+    static UPARAM(DisplayName = "写入成功") bool WriteTextFile(
+        UPARAM(DisplayName = "文件路径") const FString& FilePath,
+        UPARAM(DisplayName = "文件内容") const FString& Content,
+        UPARAM(DisplayName = "错误信息") FString& OutErrorMessage,
+        UPARAM(DisplayName = "覆盖文件") bool bOverwrite = true,
+        UPARAM(DisplayName = "创建目录") bool bCreateDirectories = true
+    );
+
+    UFUNCTION(BlueprintCallable, meta = (
+        DisplayName = "Check File Exists", 
+        Keywords = "检查文件存在 文件是否存在",
+        ToolTip = "检查指定路径的文件是否存在",
+        Category = "UtilityExtend|FileIO"
+    ))
+    static UPARAM(DisplayName = "文件存在") bool CheckFileExists(
+        UPARAM(DisplayName = "文件路径") const FString& FilePath
+    );
+
+    UFUNCTION(BlueprintCallable, meta = (
+        DisplayName = "Get File Size", 
+        Keywords = "获取文件大小 文件尺寸",
+        ToolTip = "获取指定文件的大小（字节）",
+        Category = "UtilityExtend|FileIO"
+    ))
+    static UPARAM(DisplayName = "文件大小") int64 GetFileSize(
+        UPARAM(DisplayName = "文件路径") const FString& FilePath
+    );
+
+    UFUNCTION(BlueprintCallable, meta = (
+        DisplayName = "Delete File", 
+        Keywords = "删除文件 移除文件",
+        ToolTip = "删除指定路径的文件",
+        Category = "UtilityExtend|FileIO"
+    ))
+    static UPARAM(DisplayName = "删除成功") bool DeleteFile(
+        UPARAM(DisplayName = "文件路径") const FString& FilePath,
+        UPARAM(DisplayName = "错误信息") FString& OutErrorMessage
+    );
+
+    UFUNCTION(BlueprintCallable, meta = (
+        DisplayName = "Copy File", 
+        Keywords = "复制文件 拷贝文件 文件复制",
+        ToolTip = "将文件从源路径复制到目标路径，支持创建目录和覆盖文件",
+        Category = "UtilityExtend|FileIO"
+    ))
+    static UPARAM(DisplayName = "复制成功") bool CopyFile(
+        UPARAM(DisplayName = "源文件路径") const FString& SourceFilePath,
+        UPARAM(DisplayName = "目标文件路径") const FString& DestFilePath,
+        UPARAM(DisplayName = "错误信息") FString& OutErrorMessage,
+        UPARAM(DisplayName = "覆盖文件") bool bOverwrite = true,
+        UPARAM(DisplayName = "创建目录") bool bCreateDirectories = true
+    );
+
+    // 路径相关函数
+    UFUNCTION(BlueprintCallable, BlueprintPure, meta = (
+        DisplayName = "Get UtilityExtend Plugin Directory", 
+        Keywords = "获取插件目录 插件路径 插件根目录",
+        ToolTip = "获取UtilityExtend插件的根目录路径",
+        Category = "UtilityExtend|Path"
+    ))
+    static UPARAM(DisplayName = "插件目录路径") FString GetUtilityExtendPluginDirectory();
 };

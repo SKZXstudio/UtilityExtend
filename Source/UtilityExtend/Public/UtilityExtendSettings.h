@@ -141,6 +141,29 @@ struct FToolbarButtonConfig
         , bShowButtonText(true)
     {
     }
+
+    /** 自定义序列化支持，确保DropdownItems数组正确保存和加载 */
+    bool Serialize(FArchive& Ar);
+    
+    /** 配置导出支持 - 确保在项目设置中正确显示和保存 */
+    bool ExportTextItem(FString& ValueStr, FToolbarButtonConfig const& DefaultValue, UObject* Parent, int32 PortFlags, UObject* ExportRootScope) const;
+    bool ImportTextItem(const TCHAR*& Buffer, int32 PortFlags, UObject* Parent, FOutputDevice* ErrorText);
+
+private:
+    /** 从字符串解析下拉项数组 */
+    void ParseDropdownItemsFromString(const FString& DropdownString);
+};
+
+// 告诉UE FToolbarButtonConfig也有自定义序列化
+template<>
+struct TStructOpsTypeTraits<FToolbarButtonConfig> : public TStructOpsTypeTraitsBase2<FToolbarButtonConfig>
+{
+    enum
+    {
+        WithSerializer = true,
+        WithImportTextItem = true,
+        WithExportTextItem = true,
+    };
 };
 
 /**

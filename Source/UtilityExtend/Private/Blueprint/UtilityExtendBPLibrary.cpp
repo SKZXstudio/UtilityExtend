@@ -13,7 +13,11 @@
 #include "HAL/PlatformProcess.h"
 #include "HAL/PlatformFilemanager.h"
 #include "Misc/Paths.h"
+#include "Interfaces/IPluginManager.h"
 #include "Async/Async.h"
+#include "Misc/FileHelper.h"
+#include "HAL/PlatformFile.h"
+#include "GenericPlatform/GenericPlatformFile.h"
 
 // Windows特定头文件
 #if PLATFORM_WINDOWS
@@ -481,6 +485,370 @@ bool UUtilityExtendBPLibrary::WaitForExternalApplication(const FString& ProcessN
     
     UE_LOG(LogTemp, Warning, TEXT("Timeout waiting for external application: %s"), *ProcessName);
     return false;
+}
+
+// 文件读写相关函数实现
+bool UUtilityExtendBPLibrary::ReadTextFile(const FString& FilePath, FString& OutContent, FString& OutErrorMessage)
+{
+    // 清空输出参数
+    OutContent.Empty();
+    OutErrorMessage.Empty();
+    
+    // 检查文件路径是否为空
+    if (FilePath.IsEmpty())
+    {
+        OutErrorMessage = TEXT("文件路径不能为空");
+        UE_LOG(LogTemp, Error, TEXT("ReadTextFile: File path is empty"));
+        return false;
+    }
+    
+    // 处理相对路径和绝对路径
+    FString FullPath = FilePath;
+    if (!FPaths::IsRelative(FilePath))
+    {
+        // 绝对路径，直接使用
+        FullPath = FilePath;
+    }
+    else
+    {
+        // 相对路径，转换为项目相对路径
+        FullPath = FPaths::ProjectDir() + FilePath;
+    }
+    
+    // 规范化路径
+    FPaths::NormalizeFilename(FullPath);
+    
+    // 检查文件是否存在
+    IPlatformFile& PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
+    if (!PlatformFile.FileExists(*FullPath))
+    {
+        OutErrorMessage = FString::Printf(TEXT("文件不存在: %s"), *FullPath);
+        UE_LOG(LogTemp, Error, TEXT("ReadTextFile: File does not exist: %s"), *FullPath);
+        return false;
+    }
+    
+    // 读取文件内容
+    if (!FFileHelper::LoadFileToString(OutContent, *FullPath))
+    {
+        OutErrorMessage = FString::Printf(TEXT("读取文件失败: %s"), *FullPath);
+        UE_LOG(LogTemp, Error, TEXT("ReadTextFile: Failed to load file: %s"), *FullPath);
+        return false;
+    }
+    
+    UE_LOG(LogTemp, Log, TEXT("ReadTextFile: Successfully read file: %s (%d characters)"), *FullPath, OutContent.Len());
+    return true;
+}
+
+bool UUtilityExtendBPLibrary::WriteTextFile(const FString& FilePath, const FString& Content, FString& OutErrorMessage, bool bOverwrite, bool bCreateDirectories)
+{
+    // 清空输出参数
+    OutErrorMessage.Empty();
+    
+    // 检查文件路径是否为空
+    if (FilePath.IsEmpty())
+    {
+        OutErrorMessage = TEXT("文件路径不能为空");
+        UE_LOG(LogTemp, Error, TEXT("WriteTextFile: File path is empty"));
+        return false;
+    }
+    
+    // 处理相对路径和绝对路径
+    FString FullPath = FilePath;
+    if (!FPaths::IsRelative(FilePath))
+    {
+        // 绝对路径，直接使用
+        FullPath = FilePath;
+    }
+    else
+    {
+        // 相对路径，转换为项目相对路径
+        FullPath = FPaths::ProjectDir() + FilePath;
+    }
+    
+    // 规范化路径
+    FPaths::NormalizeFilename(FullPath);
+    
+    IPlatformFile& PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
+    
+    // 检查文件是否存在，如果存在且不允许覆盖，则返回错误
+    if (PlatformFile.FileExists(*FullPath) && !bOverwrite)
+    {
+        OutErrorMessage = FString::Printf(TEXT("文件已存在且不允许覆盖: %s"), *FullPath);
+        UE_LOG(LogTemp, Error, TEXT("WriteTextFile: File exists and overwrite is disabled: %s"), *FullPath);
+        return false;
+    }
+    
+    // 如果需要创建目录，先创建目录
+    if (bCreateDirectories)
+    {
+        FString Directory = FPaths::GetPath(FullPath);
+        if (!Directory.IsEmpty() && !PlatformFile.DirectoryExists(*Directory))
+        {
+            if (!PlatformFile.CreateDirectoryTree(*Directory))
+            {
+                OutErrorMessage = FString::Printf(TEXT("创建目录失败: %s"), *Directory);
+                UE_LOG(LogTemp, Error, TEXT("WriteTextFile: Failed to create directory: %s"), *Directory);
+                return false;
+            }
+        }
+    }
+    
+    // 写入文件内容
+    if (!FFileHelper::SaveStringToFile(Content, *FullPath))
+    {
+        OutErrorMessage = FString::Printf(TEXT("写入文件失败: %s"), *FullPath);
+        UE_LOG(LogTemp, Error, TEXT("WriteTextFile: Failed to save file: %s"), *FullPath);
+        return false;
+    }
+    
+    UE_LOG(LogTemp, Log, TEXT("WriteTextFile: Successfully wrote file: %s (%d characters)"), *FullPath, Content.Len());
+    return true;
+}
+
+bool UUtilityExtendBPLibrary::CheckFileExists(const FString& FilePath)
+{
+    if (FilePath.IsEmpty())
+    {
+        UE_LOG(LogTemp, Error, TEXT("CheckFileExists: File path is empty"));
+        return false;
+    }
+    
+    // 处理相对路径和绝对路径
+    FString FullPath = FilePath;
+    if (!FPaths::IsRelative(FilePath))
+    {
+        FullPath = FilePath;
+    }
+    else
+    {
+        FullPath = FPaths::ProjectDir() + FilePath;
+    }
+    
+    // 规范化路径
+    FPaths::NormalizeFilename(FullPath);
+    
+    IPlatformFile& PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
+    return PlatformFile.FileExists(*FullPath);
+}
+
+int64 UUtilityExtendBPLibrary::GetFileSize(const FString& FilePath)
+{
+    if (FilePath.IsEmpty())
+    {
+        UE_LOG(LogTemp, Error, TEXT("GetFileSize: File path is empty"));
+        return -1;
+    }
+    
+    // 处理相对路径和绝对路径
+    FString FullPath = FilePath;
+    if (!FPaths::IsRelative(FilePath))
+    {
+        FullPath = FilePath;
+    }
+    else
+    {
+        FullPath = FPaths::ProjectDir() + FilePath;
+    }
+    
+    // 规范化路径
+    FPaths::NormalizeFilename(FullPath);
+    
+    IPlatformFile& PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
+    
+    if (!PlatformFile.FileExists(*FullPath))
+    {
+        UE_LOG(LogTemp, Error, TEXT("GetFileSize: File does not exist: %s"), *FullPath);
+        return -1;
+    }
+    
+    return PlatformFile.FileSize(*FullPath);
+}
+
+bool UUtilityExtendBPLibrary::DeleteFile(const FString& FilePath, FString& OutErrorMessage)
+{
+    // 清空输出参数
+    OutErrorMessage.Empty();
+    
+    if (FilePath.IsEmpty())
+    {
+        OutErrorMessage = TEXT("文件路径不能为空");
+        UE_LOG(LogTemp, Error, TEXT("DeleteFile: File path is empty"));
+        return false;
+    }
+    
+    // 处理相对路径和绝对路径
+    FString FullPath = FilePath;
+    if (!FPaths::IsRelative(FilePath))
+    {
+        FullPath = FilePath;
+    }
+    else
+    {
+        FullPath = FPaths::ProjectDir() + FilePath;
+    }
+    
+    // 规范化路径
+    FPaths::NormalizeFilename(FullPath);
+    
+    IPlatformFile& PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
+    
+    if (!PlatformFile.FileExists(*FullPath))
+    {
+        OutErrorMessage = FString::Printf(TEXT("文件不存在: %s"), *FullPath);
+        UE_LOG(LogTemp, Error, TEXT("DeleteFile: File does not exist: %s"), *FullPath);
+        return false;
+    }
+    
+    if (!PlatformFile.DeleteFile(*FullPath))
+    {
+        OutErrorMessage = FString::Printf(TEXT("删除文件失败: %s"), *FullPath);
+        UE_LOG(LogTemp, Error, TEXT("DeleteFile: Failed to delete file: %s"), *FullPath);
+        return false;
+    }
+    
+    UE_LOG(LogTemp, Log, TEXT("DeleteFile: Successfully deleted file: %s"), *FullPath);
+    return true;
+}
+
+bool UUtilityExtendBPLibrary::CopyFile(const FString& SourceFilePath, const FString& DestFilePath, FString& OutErrorMessage, bool bOverwrite, bool bCreateDirectories)
+{
+    // 清空输出参数
+    OutErrorMessage.Empty();
+    
+    // 检查源文件路径是否为空
+    if (SourceFilePath.IsEmpty())
+    {
+        OutErrorMessage = TEXT("源文件路径不能为空");
+        UE_LOG(LogTemp, Error, TEXT("CopyFile: Source file path is empty"));
+        return false;
+    }
+    
+    // 检查目标文件路径是否为空
+    if (DestFilePath.IsEmpty())
+    {
+        OutErrorMessage = TEXT("目标文件路径不能为空");
+        UE_LOG(LogTemp, Error, TEXT("CopyFile: Destination file path is empty"));
+        return false;
+    }
+    
+    // 获取平台文件管理器
+    IPlatformFile& PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
+    
+    // 处理源文件路径
+    FString SourceFullPath;
+    if (FPaths::IsRelative(SourceFilePath))
+    {
+        SourceFullPath = FPaths::ConvertRelativePathToFull(FPaths::ProjectDir(), SourceFilePath);
+    }
+    else
+    {
+        SourceFullPath = SourceFilePath;
+    }
+    SourceFullPath = FPaths::ConvertRelativePathToFull(SourceFullPath);
+    FPaths::NormalizeFilename(SourceFullPath);
+    
+    // 处理目标文件路径
+    FString DestFullPath;
+    if (FPaths::IsRelative(DestFilePath))
+    {
+        DestFullPath = FPaths::ConvertRelativePathToFull(FPaths::ProjectDir(), DestFilePath);
+    }
+    else
+    {
+        DestFullPath = DestFilePath;
+    }
+    DestFullPath = FPaths::ConvertRelativePathToFull(DestFullPath);
+    FPaths::NormalizeFilename(DestFullPath);
+    
+    UE_LOG(LogTemp, Log, TEXT("CopyFile: Source: %s -> Destination: %s"), *SourceFullPath, *DestFullPath);
+    
+    // 检查源文件是否存在
+    if (!PlatformFile.FileExists(*SourceFullPath))
+    {
+        OutErrorMessage = FString::Printf(TEXT("源文件不存在: %s"), *SourceFullPath);
+        UE_LOG(LogTemp, Error, TEXT("CopyFile: Source file does not exist: %s"), *SourceFullPath);
+        return false;
+    }
+    
+    // 检查目标文件是否已存在
+    if (!bOverwrite && PlatformFile.FileExists(*DestFullPath))
+    {
+        OutErrorMessage = FString::Printf(TEXT("目标文件已存在且不允许覆盖: %s"), *DestFullPath);
+        UE_LOG(LogTemp, Warning, TEXT("CopyFile: Destination file exists and overwrite is disabled: %s"), *DestFullPath);
+        return false;
+    }
+    
+    // 如果需要创建目录，则创建目标文件所在的目录
+    if (bCreateDirectories)
+    {
+        FString DestDirectory = FPaths::GetPath(DestFullPath);
+        if (!DestDirectory.IsEmpty() && !PlatformFile.DirectoryExists(*DestDirectory))
+        {
+            if (!PlatformFile.CreateDirectoryTree(*DestDirectory))
+            {
+                OutErrorMessage = FString::Printf(TEXT("无法创建目标目录: %s"), *DestDirectory);
+                UE_LOG(LogTemp, Error, TEXT("CopyFile: Failed to create destination directory: %s"), *DestDirectory);
+                return false;
+            }
+            UE_LOG(LogTemp, Log, TEXT("CopyFile: Created destination directory: %s"), *DestDirectory);
+        }
+    }
+    
+    // 执行文件复制
+    if (!PlatformFile.CopyFile(*DestFullPath, *SourceFullPath))
+    {
+        OutErrorMessage = FString::Printf(TEXT("复制文件失败: %s -> %s"), *SourceFullPath, *DestFullPath);
+        UE_LOG(LogTemp, Error, TEXT("CopyFile: Failed to copy file: %s -> %s"), *SourceFullPath, *DestFullPath);
+        return false;
+    }
+    
+    // 验证复制结果
+    if (!PlatformFile.FileExists(*DestFullPath))
+    {
+        OutErrorMessage = FString::Printf(TEXT("复制后目标文件不存在: %s"), *DestFullPath);
+        UE_LOG(LogTemp, Error, TEXT("CopyFile: Destination file does not exist after copy: %s"), *DestFullPath);
+        return false;
+    }
+    
+    // 获取源文件和目标文件大小进行验证
+    int64 SourceSize = PlatformFile.FileSize(*SourceFullPath);
+    int64 DestSize = PlatformFile.FileSize(*DestFullPath);
+    
+    if (SourceSize != DestSize)
+    {
+        OutErrorMessage = FString::Printf(TEXT("复制后文件大小不匹配: 源文件 %lld 字节，目标文件 %lld 字节"), SourceSize, DestSize);
+        UE_LOG(LogTemp, Error, TEXT("CopyFile: File size mismatch after copy: Source %lld bytes, Destination %lld bytes"), SourceSize, DestSize);
+        return false;
+    }
+    
+    UE_LOG(LogTemp, Log, TEXT("CopyFile: Successfully copied file: %s -> %s (%lld bytes)"), *SourceFullPath, *DestFullPath, SourceSize);
+    return true;
+}
+
+FString UUtilityExtendBPLibrary::GetUtilityExtendPluginDirectory()
+{
+    // 获取插件管理器
+    IPluginManager& PluginManager = IPluginManager::Get();
+    
+    // 查找UtilityExtend插件
+    TSharedPtr<IPlugin> Plugin = PluginManager.FindPlugin(TEXT("UtilityExtend"));
+    
+    if (!Plugin.IsValid())
+    {
+        UE_LOG(LogTemp, Error, TEXT("GetUtilityExtendPluginDirectory: UtilityExtend plugin not found"));
+        return FString();
+    }
+    
+    // 获取插件的基础目录
+    FString PluginBaseDir = Plugin->GetBaseDir();
+    
+    // 转换为绝对路径并标准化
+    FString PluginDirectory = FPaths::ConvertRelativePathToFull(PluginBaseDir);
+    FPaths::NormalizeDirectoryName(PluginDirectory);
+    
+    UE_LOG(LogTemp, Log, TEXT("GetUtilityExtendPluginDirectory: Plugin directory: %s"), *PluginDirectory);
+    
+    return PluginDirectory;
 }
 
 
