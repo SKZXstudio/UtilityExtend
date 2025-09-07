@@ -18,6 +18,13 @@
 #include "Misc/FileHelper.h"
 #include "HAL/PlatformFile.h"
 #include "GenericPlatform/GenericPlatformFile.h"
+#include "Developer/DesktopPlatform/Public/IDesktopPlatform.h"
+#include "Developer/DesktopPlatform/Public/DesktopPlatformModule.h"
+#include "Engine/Engine.h"
+#include "EditorUtilityWidget.h"
+#include "EditorUtilitySubsystem.h"
+#include "EditorUtilityWidgetBlueprint.h"
+#include "Framework/Docking/TabManager.h"
 
 // Windows特定头文件
 #if PLATFORM_WINDOWS
@@ -735,32 +742,46 @@ bool UUtilityExtendBPLibrary::CopyFile(const FString& SourceFilePath, const FStr
     IPlatformFile& PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
     
     // 处理源文件路径
+    UE_LOG(LogTemp, Log, TEXT("CopyFile: Original Source Path: %s"), *SourceFilePath);
+    UE_LOG(LogTemp, Log, TEXT("CopyFile: IsRelative(SourceFilePath): %s"), FPaths::IsRelative(SourceFilePath) ? TEXT("true") : TEXT("false"));
+    
     FString SourceFullPath;
     if (FPaths::IsRelative(SourceFilePath))
     {
         SourceFullPath = FPaths::ConvertRelativePathToFull(FPaths::ProjectDir(), SourceFilePath);
+        UE_LOG(LogTemp, Log, TEXT("CopyFile: Converted relative source path to: %s"), *SourceFullPath);
     }
     else
     {
         SourceFullPath = SourceFilePath;
+        UE_LOG(LogTemp, Log, TEXT("CopyFile: Using absolute source path: %s"), *SourceFullPath);
     }
-    SourceFullPath = FPaths::ConvertRelativePathToFull(SourceFullPath);
     FPaths::NormalizeFilename(SourceFullPath);
+    UE_LOG(LogTemp, Log, TEXT("CopyFile: Normalized source path: %s"), *SourceFullPath);
     
     // 处理目标文件路径
+    UE_LOG(LogTemp, Log, TEXT("CopyFile: Original Dest Path: %s"), *DestFilePath);
+    UE_LOG(LogTemp, Log, TEXT("CopyFile: IsRelative(DestFilePath): %s"), FPaths::IsRelative(DestFilePath) ? TEXT("true") : TEXT("false"));
+    
     FString DestFullPath;
     if (FPaths::IsRelative(DestFilePath))
     {
         DestFullPath = FPaths::ConvertRelativePathToFull(FPaths::ProjectDir(), DestFilePath);
+        UE_LOG(LogTemp, Log, TEXT("CopyFile: Converted relative dest path to: %s"), *DestFullPath);
     }
     else
     {
         DestFullPath = DestFilePath;
+        UE_LOG(LogTemp, Log, TEXT("CopyFile: Using absolute dest path: %s"), *DestFullPath);
     }
-    DestFullPath = FPaths::ConvertRelativePathToFull(DestFullPath);
     FPaths::NormalizeFilename(DestFullPath);
+    UE_LOG(LogTemp, Log, TEXT("CopyFile: Normalized dest path: %s"), *DestFullPath);
     
-    UE_LOG(LogTemp, Log, TEXT("CopyFile: Source: %s -> Destination: %s"), *SourceFullPath, *DestFullPath);
+    UE_LOG(LogTemp, Log, TEXT("CopyFile: Final Source: %s -> Final Destination: %s"), *SourceFullPath, *DestFullPath);
+    
+    // 额外的路径验证
+    UE_LOG(LogTemp, Log, TEXT("CopyFile: Project Directory: %s"), *FPaths::ProjectDir());
+    UE_LOG(LogTemp, Log, TEXT("CopyFile: Source exists check: %s"), FPlatformFileManager::Get().GetPlatformFile().FileExists(*SourceFullPath) ? TEXT("true") : TEXT("false"));
     
     // 检查源文件是否存在
     if (!PlatformFile.FileExists(*SourceFullPath))
@@ -849,6 +870,237 @@ FString UUtilityExtendBPLibrary::GetUtilityExtendPluginDirectory()
     UE_LOG(LogTemp, Log, TEXT("GetUtilityExtendPluginDirectory: Plugin directory: %s"), *PluginDirectory);
     
     return PluginDirectory;
+}
+
+TArray<FString> UUtilityExtendBPLibrary::OpenFileDialog(
+    const FString& DialogTitle,
+    const FString& DefaultPath,
+    const FString& FileTypeFilter,
+    bool bAllowMultipleSelection)
+{
+    TArray<FString> SelectedFiles;
+    
+    // 获取桌面平台模块
+    IDesktopPlatform* DesktopPlatform = FDesktopPlatformModule::Get();
+    if (!DesktopPlatform)
+    {
+        UE_LOG(LogTemp, Error, TEXT("OpenFileDialog: Failed to get desktop platform"));
+        return SelectedFiles;
+    }
+    
+    // 获取主窗口句柄
+    const void* ParentWindowHandle = nullptr;
+    if (GEngine && GEngine->GameViewport)
+    {
+        ParentWindowHandle = GEngine->GameViewport->GetWindow().Get()->GetNativeWindow()->GetOSWindowHandle();
+    }
+    
+    // 设置默认路径，如果为空则使用项目目录
+    FString StartDirectory = DefaultPath;
+    if (StartDirectory.IsEmpty())
+    {
+        StartDirectory = FPaths::ProjectDir();
+    }
+    
+    // 确保路径存在
+    if (!FPaths::DirectoryExists(StartDirectory))
+    {
+        StartDirectory = FPaths::ProjectDir();
+    }
+    
+    // 调用文件对话框
+    bool bSuccess = false;
+    if (bAllowMultipleSelection)
+    {
+        bSuccess = DesktopPlatform->OpenFileDialog(
+            ParentWindowHandle,
+            DialogTitle,
+            StartDirectory,
+            TEXT(""),
+            FileTypeFilter,
+            EFileDialogFlags::Multiple,
+            SelectedFiles
+        );
+    }
+    else
+    {
+        bSuccess = DesktopPlatform->OpenFileDialog(
+            ParentWindowHandle,
+            DialogTitle,
+            StartDirectory,
+            TEXT(""),
+            FileTypeFilter,
+            EFileDialogFlags::None,
+            SelectedFiles
+        );
+    }
+    
+    if (bSuccess)
+    {
+        UE_LOG(LogTemp, Log, TEXT("OpenFileDialog: Successfully selected %d file(s)"), SelectedFiles.Num());
+        
+        // 处理返回的路径，将相对路径转换为绝对路径
+        for (int32 i = 0; i < SelectedFiles.Num(); i++)
+        {
+            FString& FilePath = SelectedFiles[i];
+            UE_LOG(LogTemp, Log, TEXT("OpenFileDialog: Original selected file %d: %s"), i, *FilePath);
+            
+            // 如果是相对路径，转换为绝对路径
+            if (FPaths::IsRelative(FilePath))
+            {
+                UE_LOG(LogTemp, Log, TEXT("OpenFileDialog: File %d is relative, converting to absolute"), i);
+                
+                // 对于以../开始的路径，需要基于项目目录来解析
+                FString AbsolutePath = FPaths::ConvertRelativePathToFull(FPaths::ProjectDir(), FilePath);
+                
+                // 标准化路径
+                FPaths::NormalizeFilename(AbsolutePath);
+                
+                UE_LOG(LogTemp, Log, TEXT("OpenFileDialog: Converted file %d to absolute path: %s"), i, *AbsolutePath);
+                
+                // 验证文件是否存在
+                if (FPaths::FileExists(AbsolutePath))
+                {
+                    FilePath = AbsolutePath;
+                    UE_LOG(LogTemp, Log, TEXT("OpenFileDialog: File %d exists, path updated"), i);
+                }
+                else
+                {
+                    UE_LOG(LogTemp, Warning, TEXT("OpenFileDialog: Converted path for file %d does not exist: %s"), i, *AbsolutePath);
+                }
+            }
+            else
+            {
+                UE_LOG(LogTemp, Log, TEXT("OpenFileDialog: File %d is already absolute: %s"), i, *FilePath);
+            }
+            
+            UE_LOG(LogTemp, Log, TEXT("OpenFileDialog: Final selected file %d: %s"), i, *FilePath);
+        }
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("OpenFileDialog: User cancelled or dialog failed"));
+    }
+    
+    return SelectedFiles;
+}
+
+
+bool UUtilityExtendBPLibrary::RunUtilityWidget(UEditorUtilityWidgetBlueprint* WidgetBlueprint, const FString& TabDisplayName, bool& bOutSuccess, FString& OutTabId)
+{
+    bOutSuccess = false;
+    OutTabId = FString();
+    
+    // 检查是否在编辑器环境中
+    if (!GEditor)
+    {
+        UE_LOG(LogTemp, Error, TEXT("RunUtilityWidget: Not in editor environment"));
+        return false;
+    }
+    
+    // 检查Widget蓝图是否有效
+    if (!WidgetBlueprint)
+    {
+        UE_LOG(LogTemp, Error, TEXT("RunUtilityWidget: WidgetBlueprint is null"));
+        return false;
+    }
+    
+    // 获取EditorUtilitySubsystem
+    UEditorUtilitySubsystem* EditorUtilitySubsystem = GEditor->GetEditorSubsystem<UEditorUtilitySubsystem>();
+    if (!EditorUtilitySubsystem)
+    {
+        UE_LOG(LogTemp, Error, TEXT("RunUtilityWidget: Failed to get EditorUtilitySubsystem"));
+        return false;
+    }
+    
+    try
+    {
+        // 确定显示名称
+        // TabDisplayName参数会被传递给Tab系统用于显示
+        
+        UE_LOG(LogTemp, Log, TEXT("RunUtilityWidget: Attempting to spawn widget blueprint: %s with display name: %s"), 
+               *WidgetBlueprint->GetName(), *TabDisplayName);
+        
+        // 直接使用SpawnAndRegisterTab方法运行Widget
+        UEditorUtilityWidget* SpawnedWidget = EditorUtilitySubsystem->SpawnAndRegisterTab(WidgetBlueprint);
+        if (!SpawnedWidget)
+        {
+            UE_LOG(LogTemp, Error, TEXT("RunUtilityWidget: Failed to spawn widget"));
+            return false;
+        }
+        
+        // 成功创建Widget
+        bOutSuccess = true;
+        // 注意：UEditorUtilityWidget没有直接的GetTabId方法，TabID由系统内部管理
+        OutTabId = FString::Printf(TEXT("UtilityWidget_%s"), *WidgetBlueprint->GetName());
+        UE_LOG(LogTemp, Log, TEXT("RunUtilityWidget: Successfully spawned widget: %s"), *WidgetBlueprint->GetName());
+        return true;
+    }
+    catch (const std::exception& e)
+    {
+        UE_LOG(LogTemp, Error, TEXT("RunUtilityWidget: Exception occurred: %s"), ANSI_TO_TCHAR(e.what()));
+        return false;
+    }
+    catch (...)
+    {
+        UE_LOG(LogTemp, Error, TEXT("RunUtilityWidget: Unknown exception occurred"));
+        return false;
+    }
+}
+
+bool UUtilityExtendBPLibrary::CloseUtilityWidgetTab(const FString& TabId)
+{
+    // 检查是否在编辑器环境中
+    if (!GEditor)
+    {
+        UE_LOG(LogTemp, Error, TEXT("CloseUtilityWidgetTab: Not in editor environment"));
+        return false;
+    }
+    
+    // 检查TabId是否有效
+    if (TabId.IsEmpty())
+    {
+        UE_LOG(LogTemp, Error, TEXT("CloseUtilityWidgetTab: TabId is empty"));
+        return false;
+    }
+    
+    // 获取EditorUtilitySubsystem
+    UEditorUtilitySubsystem* EditorUtilitySubsystem = GEditor->GetEditorSubsystem<UEditorUtilitySubsystem>();
+    if (!EditorUtilitySubsystem)
+    {
+        UE_LOG(LogTemp, Error, TEXT("CloseUtilityWidgetTab: Failed to get EditorUtilitySubsystem"));
+        return false;
+    }
+    
+    try
+    {
+        FName TabName = FName(*TabId);
+        UE_LOG(LogTemp, Log, TEXT("CloseUtilityWidgetTab: Attempting to close tab with ID: %s"), *TabId);
+        
+        // 尝试关闭指定的标签页
+        bool bClosed = EditorUtilitySubsystem->CloseTabByID(TabName);
+        
+        if (bClosed)
+        {
+            UE_LOG(LogTemp, Log, TEXT("CloseUtilityWidgetTab: Successfully closed tab with ID: %s"), *TabId);
+        }
+        else
+        {
+            UE_LOG(LogTemp, Warning, TEXT("CloseUtilityWidgetTab: Failed to close tab with ID: %s (tab may not exist)"), *TabId);
+        }
+        
+        return bClosed;
+    }
+    catch (const std::exception& e)
+    {
+        UE_LOG(LogTemp, Error, TEXT("CloseUtilityWidgetTab: Exception occurred: %s"), ANSI_TO_TCHAR(e.what()));
+        return false;
+    }
+    catch (...)
+    {
+        UE_LOG(LogTemp, Error, TEXT("CloseUtilityWidgetTab: Unknown exception occurred"));
+        return false;
+    }
 }
 
 

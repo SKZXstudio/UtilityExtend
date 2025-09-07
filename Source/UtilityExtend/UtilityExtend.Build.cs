@@ -52,6 +52,10 @@ public class UtilityExtend : ModuleRules
 				"EditorStyle",
 				"AppFramework",
 				"ApplicationCore",
+				"DesktopPlatform",
+				"EditorSubsystem",
+				"UMGEditor",
+				"ToolWidgets",
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);

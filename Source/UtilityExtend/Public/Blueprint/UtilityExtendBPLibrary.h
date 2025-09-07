@@ -188,6 +188,20 @@ public:
         UPARAM(DisplayName = "创建目录") bool bCreateDirectories = true
     );
 
+    // 文件对话框相关函数
+    UFUNCTION(BlueprintCallable, meta = (
+        DisplayName = "Open File Dialog", 
+        Keywords = "打开文件对话框 选择文件 文件浏览器",
+        ToolTip = "打开系统文件选择对话框，支持文件类型过滤和多选模式",
+        Category = "UtilityExtend|FileDialog"
+    ))
+    static UPARAM(DisplayName = "选中的文件路径") TArray<FString> OpenFileDialog(
+        UPARAM(DisplayName = "对话框标题") const FString& DialogTitle = TEXT("选择文件"),
+        UPARAM(DisplayName = "默认路径") const FString& DefaultPath = TEXT(""),
+        UPARAM(DisplayName = "文件类型过滤器") const FString& FileTypeFilter = TEXT("所有文件|*.*"),
+        UPARAM(DisplayName = "允许多选") bool bAllowMultipleSelection = false
+    );
+
     // 路径相关函数
     UFUNCTION(BlueprintCallable, BlueprintPure, meta = (
         DisplayName = "Get UtilityExtend Plugin Directory", 
@@ -196,4 +210,28 @@ public:
         Category = "UtilityExtend|Path"
     ))
     static UPARAM(DisplayName = "插件目录路径") FString GetUtilityExtendPluginDirectory();
+
+    // UtilityWidget运行相关函数
+    UFUNCTION(BlueprintCallable, meta = (
+        DisplayName = "Run Utility Widget", 
+        Keywords = "运行实用工具控件 启动UtilityWidget 运行编辑器工具控件",
+        ToolTip = "运行指定的EditorUtilityWidget，效果等同于右键点击'运行编辑器工具控件'",
+        Category = "UtilityExtend|UtilityWidget"
+    ))
+    static UPARAM(DisplayName = "运行成功") bool RunUtilityWidget(
+        UPARAM(DisplayName = "控件蓝图") class UEditorUtilityWidgetBlueprint* WidgetBlueprint,
+        UPARAM(DisplayName = "标签页显示名称") const FString& TabDisplayName,
+        UPARAM(DisplayName = "运行成功") bool& bOutSuccess,
+        UPARAM(DisplayName = "标签页ID") FString& OutTabId
+    );
+
+    UFUNCTION(BlueprintCallable, meta = (
+        DisplayName = "Close Utility Widget Tab", 
+        Keywords = "关闭实用工具控件 关闭标签页 关闭UtilityWidget",
+        ToolTip = "通过标签页ID关闭指定的UtilityWidget标签页",
+        Category = "UtilityExtend|UtilityWidget"
+    ))
+    static UPARAM(DisplayName = "关闭成功") bool CloseUtilityWidgetTab(
+        UPARAM(DisplayName = "标签页ID") const FString& TabId
+    );
 };
