@@ -1,6 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "Blueprint/UtilityExtendBPLibrary.h"
+#include "Notification/UtilityLoadingNotification.h"
 #include "Framework/Notifications/NotificationManager.h"
 #include "Widgets/Notifications/SNotificationList.h"
 #include "Framework/Application/SlateApplication.h"
@@ -67,114 +68,221 @@
 
 // 静态成员变量定义
 TArray<TSharedPtr<SNotificationItem>> UUtilityExtendBPLibrary::CreatedNotifications;
+FOnNotificationButtonClicked UUtilityExtendBPLibrary::OnNotificationButtonClicked;
+TMap<FString, TSharedPtr<SNotificationItem>> UUtilityExtendBPLibrary::NotificationMap;
+TArray<TWeakObjectPtr<UObject>> UUtilityExtendBPLibrary::NotificationEventReceivers;
 
-void UUtilityExtendBPLibrary::ShowEditorNotification(const FString& Message, EEditorNotificationType NotificationType, float Duration, bool bAutoExpire)
+// 创建常规通知函数（不带按钮）
+FString UUtilityExtendBPLibrary::CreateEditorNotification(
+    const FString& Message,
+    EEditorNotificationType NotificationType,
+    float Duration,
+    bool bAutoExpire)
 {
     // 检查Slate系统是否可用
     if (!FSlateApplication::IsInitialized())
     {
-        UE_LOG(LogTemp, Warning, TEXT("Slate system not initialized, cannot show notification"));
-        return;
+        UE_LOG(LogTemp, Warning, TEXT("Slate系统未初始化，无法显示通知"));
+        return FString();
     }
 
-    // 创建通知
-    FNotificationInfo Info(FText::FromString(Message));
-    Info.bUseLargeFont = false;
-    Info.FadeInDuration = 0.1f;
-    Info.FadeOutDuration = 0.5f;
-    Info.ExpireDuration = Duration;
+    // 生成唯一的通知ID
+    FString NotificationId = FGuid::NewGuid().ToString();
 
-    // 根据通知类型设置相应的属性
+    // 创建通知信息
+    FNotificationInfo Info(FText::FromString(Message));
+    
+    // 确定完成状态
+    SNotificationItem::ECompletionState CompletionState = SNotificationItem::CS_Pending;
+    
+    // 根据通知类型设置属性
     switch (NotificationType)
     {
-        case EEditorNotificationType::Success:
-            Info.bUseSuccessFailIcons = true;
-            Info.bUseThrobber = false;
-            break;
-        case EEditorNotificationType::Fail:
-            Info.bUseSuccessFailIcons = true;
-            Info.bUseThrobber = false;
-            break;
-        case EEditorNotificationType::Warning:
-            Info.bUseSuccessFailIcons = true;
-            Info.bUseThrobber = false;
-            break;
-        case EEditorNotificationType::Info:
-            Info.bUseSuccessFailIcons = false;
-            Info.bUseThrobber = false;
-            break;
-        case EEditorNotificationType::WithThrobber:
-            Info.bUseSuccessFailIcons = false;
-            Info.bUseThrobber = true;
-            break;
-        case EEditorNotificationType::Default:
-        default:
-            Info.bUseSuccessFailIcons = false;
-            Info.bUseThrobber = false;
-            break;
+    case EEditorNotificationType::Success:
+        Info.bUseSuccessFailIcons = true;
+        CompletionState = SNotificationItem::CS_Success;
+        break;
+    case EEditorNotificationType::Error:
+        Info.bUseSuccessFailIcons = true;
+        CompletionState = SNotificationItem::CS_Fail;
+        break;
+    case EEditorNotificationType::Default:
+    default:
+        // 默认通知不使用特殊图标和动画
+        CompletionState = SNotificationItem::CS_None;
+        break;
+    }
+
+    // 设置持续时间和自动过期
+    Info.FadeInDuration = 0.1f;
+    Info.FadeOutDuration = 0.5f;
+    Info.ExpireDuration = bAutoExpire ? Duration : 0.0f;
+    Info.bUseLargeFont = false;
+    Info.bFireAndForget = bAutoExpire; // 如果自动过期，则设置FireAndForget
+    Info.bAllowThrottleWhenFrameRateIsLow = false;
+
+    // 常规通知不支持按钮
+
+    // 显示通知
+    TSharedPtr<SNotificationItem> NotificationItem = FSlateNotificationManager::Get().AddNotification(Info);
+    
+    if (NotificationItem.IsValid())
+    {
+        // 添加到跟踪数组
+        CreatedNotifications.Add(NotificationItem);
+        
+        // 添加到ID映射表
+        NotificationMap.Add(NotificationId, NotificationItem);
+        
+        // 设置完成状态
+        NotificationItem->SetCompletionState(CompletionState);
+    }
+
+    return NotificationId;
+}
+
+// 创建带加载动画的通知函数（支持按钮）
+FString UUtilityExtendBPLibrary::CreateLoadingNotification(
+    const FString& Message,
+    UUtilityLoadingNotification*& OutNotificationObject,
+    bool bShowButton,
+    const FString& ButtonText,
+    const FString& ButtonTooltip)
+{
+    // 检查Slate系统是否可用
+    if (!FSlateApplication::IsInitialized())
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Slate系统未初始化，无法显示通知"));
+        OutNotificationObject = nullptr;
+        return FString();
+    }
+
+    // 生成唯一的通知ID
+    FString NotificationId = FGuid::NewGuid().ToString();
+
+    // 创建通知对象
+    OutNotificationObject = NewObject<UUtilityLoadingNotification>();
+    if (!OutNotificationObject)
+    {
+        UE_LOG(LogTemp, Error, TEXT("无法创建 UUtilityLoadingNotification 对象"));
+        return FString();
+    }
+
+    // 设置通知对象的基本信息
+    OutNotificationObject->NotificationId = NotificationId;
+    OutNotificationObject->Message = Message;
+
+    // 创建通知信息
+    FNotificationInfo Info(FText::FromString(Message));
+    
+    // 设置加载动画样式
+    Info.bUseThrobber = true;
+    SNotificationItem::ECompletionState CompletionState = SNotificationItem::CS_Pending;
+
+    // 设置持续时间和自动过期（加载通知默认不会自动过期）
+    Info.FadeInDuration = 0.1f;
+    Info.FadeOutDuration = 0.5f;
+    Info.ExpireDuration = 0.0f; // 不自动过期
+    Info.bUseLargeFont = false;
+    Info.bFireAndForget = false;
+    Info.bAllowThrottleWhenFrameRateIsLow = false;
+
+    // 如果显示按钮，添加按钮
+    if (bShowButton && !ButtonText.IsEmpty())
+    {
+        // 创建按钮回调函数，使用弱引用避免悬空指针
+        TWeakObjectPtr<UUtilityLoadingNotification> WeakNotificationObject = OutNotificationObject;
+        FString CapturedButtonText = ButtonText;
+        
+        auto ButtonCallback = [WeakNotificationObject, CapturedButtonText]()
+        {
+            UE_LOG(LogTemp, Warning, TEXT("Button clicked with text: %s"), *CapturedButtonText);
+            
+            if (WeakNotificationObject.IsValid())
+            {
+                UUtilityLoadingNotification* NotificationObject = WeakNotificationObject.Get();
+                if (NotificationObject && NotificationObject->OnButtonClicked.IsBound())
+                {
+                    UE_LOG(LogTemp, Warning, TEXT("Broadcasting button click event"));
+                    NotificationObject->OnButtonClicked.Broadcast(0, CapturedButtonText);
+                }
+                else
+                {
+                    UE_LOG(LogTemp, Warning, TEXT("Notification object is valid but delegate is not bound"));
+                }
+            }
+            else
+            {
+                UE_LOG(LogTemp, Warning, TEXT("Notification object is no longer valid"));
+            }
+        };
+
+        // 添加按钮到通知
+        Info.ButtonDetails.Add(FNotificationButtonInfo(
+            FText::FromString(ButtonText),
+            FText::FromString(ButtonTooltip.IsEmpty() ? ButtonText : ButtonTooltip),
+            FSimpleDelegate::CreateLambda(ButtonCallback)
+        ));
     }
 
     // 显示通知
     TSharedPtr<SNotificationItem> NotificationItem = FSlateNotificationManager::Get().AddNotification(Info);
     
-    // 保存通知引用
     if (NotificationItem.IsValid())
     {
+        // 将通知项保存到对象中
+        OutNotificationObject->NotificationItem = NotificationItem;
+        
+        // 添加到跟踪数组
         CreatedNotifications.Add(NotificationItem);
         
-        // 根据通知类型设置完成状态
-        switch (NotificationType)
-        {
-            case EEditorNotificationType::Success:
-                NotificationItem->SetCompletionState(SNotificationItem::CS_Success);
-                break;
-            case EEditorNotificationType::Fail:
-                NotificationItem->SetCompletionState(SNotificationItem::CS_Fail);
-                break;
-            case EEditorNotificationType::Warning:
-                NotificationItem->SetCompletionState(SNotificationItem::CS_Fail); // 警告使用失败状态的图标
-                break;
-            case EEditorNotificationType::Info:
-            case EEditorNotificationType::WithThrobber:
-            case EEditorNotificationType::Default:
-            default:
-                NotificationItem->SetCompletionState(SNotificationItem::CS_Pending);
-                break;
-        }
+        // 添加到ID映射表
+        NotificationMap.Add(NotificationId, NotificationItem);
         
-        // 如果设置了自动过期，启动定时器
-        if (bAutoExpire)
-        {
-            // 使用延迟执行而不是定时器，避免GWorld依赖
-            FTimerHandle TimerHandle;
-            if (UWorld* World = GWorld)
-            {
-                FTimerManager& TimerManager = World->GetTimerManager();
-                TimerManager.SetTimer(TimerHandle, [NotificationItem]()
-                {
-                    if (NotificationItem.IsValid())
-                    {
-                        NotificationItem->ExpireAndFadeout();
-                    }
-                }, Duration, false);
-            }
-        }
+        // 设置完成状态
+        NotificationItem->SetCompletionState(CompletionState);
     }
+
+    return NotificationId;
 }
 
-void UUtilityExtendBPLibrary::RemoveAllEditorNotifications()
+// 统一的清除通知函数
+bool UUtilityExtendBPLibrary::RemoveEditorNotification(const FString& NotificationId, bool bRemoveAll)
 {
-    // 移除所有创建的通知
-    for (TSharedPtr<SNotificationItem>& NotificationItem : CreatedNotifications)
+    // 如果指定了清除全部或者NotificationId为空
+    if (bRemoveAll || NotificationId.IsEmpty())
     {
+        // 移除所有创建的通知
+        for (TSharedPtr<SNotificationItem>& NotificationItem : CreatedNotifications)
+        {
+            if (NotificationItem.IsValid())
+            {
+                NotificationItem->ExpireAndFadeout();
+            }
+        }
+        
+        CreatedNotifications.Empty();
+        NotificationMap.Empty();
+        return true;
+    }
+    
+    // 按ID移除指定通知
+    if (NotificationMap.Contains(NotificationId))
+    {
+        TSharedPtr<SNotificationItem> NotificationItem = NotificationMap[NotificationId];
         if (NotificationItem.IsValid())
         {
             NotificationItem->ExpireAndFadeout();
+            NotificationMap.Remove(NotificationId);
+            CreatedNotifications.Remove(NotificationItem);
+            return true;
         }
+        NotificationMap.Remove(NotificationId);
     }
-    
-    CreatedNotifications.Empty();
+    return false;
 }
+
+
 
 void UUtilityExtendBPLibrary::RestartEditor()
 {
@@ -1149,6 +1257,31 @@ bool UUtilityExtendBPLibrary::CloseUtilityWidgetTab(const FString& TabId)
         UE_LOG(LogTemp, Error, TEXT("CloseUtilityWidgetTab: Unknown exception occurred"));
         return false;
     }
+}
+
+UUtilityLoadingNotification* UUtilityExtendBPLibrary::CreateLoadingNotificationObject(const FString& Title, const FString& Text, const TArray<FString>& ButtonTexts, bool bShowProgressBar)
+{
+    // 创建通知对象实例
+    UUtilityLoadingNotification* NotificationObject = NewObject<UUtilityLoadingNotification>();
+    
+    if (NotificationObject)
+    {
+        // 创建通知
+        bool bSuccess = NotificationObject->CreateNotification(Title, Text, ButtonTexts, bShowProgressBar);
+        
+        if (bSuccess)
+        {
+            return NotificationObject;
+        }
+        else
+        {
+            // 创建失败，清理对象
+            NotificationObject->MarkAsGarbage();
+            return nullptr;
+        }
+    }
+    
+    return nullptr;
 }
 
 

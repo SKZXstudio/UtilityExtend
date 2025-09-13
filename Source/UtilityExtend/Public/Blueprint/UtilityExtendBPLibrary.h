@@ -5,6 +5,9 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "UtilityExtendBPLibrary.generated.h"
 
+// 前向声明
+class UUtilityLoadingNotification;
+
 /**
  * 编辑器通知类型枚举
  */
@@ -15,14 +18,32 @@ enum class EEditorNotificationType : uint8
     Default         UMETA(DisplayName = "默认"),
     /** 成功通知 */
     Success         UMETA(DisplayName = "成功"),
-    /** 失败通知 */
-    Fail            UMETA(DisplayName = "失败"),
-    /** 警告通知 */
-    Warning         UMETA(DisplayName = "警告"),
-    /** 信息通知 */
-    Info            UMETA(DisplayName = "信息"),
-    /** 带加载动画的通知 */
-    WithThrobber    UMETA(DisplayName = "带加载动画")
+    /** 错误通知 */
+    Error           UMETA(DisplayName = "错误")
+};
+
+/**
+ * 通知按钮点击事件委托
+ * @param NotificationId 通知的唯一ID
+ */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnNotificationButtonClicked, const FString&, NotificationId);
+
+/**
+ * 通知按钮点击事件接口
+ */
+UINTERFACE(BlueprintType)
+class UNotificationButtonClickInterface : public UInterface
+{
+    GENERATED_BODY()
+};
+
+class INotificationButtonClickInterface
+{
+    GENERATED_BODY()
+
+public:
+    UFUNCTION(BlueprintImplementableEvent, Category = "UtilityExtend|Notification")
+    void OnNotificationButtonClicked(const FString& NotificationId);
 };
 
 /* 
@@ -50,17 +71,41 @@ class UUtilityExtendBPLibrary : public UBlueprintFunctionLibrary
 public:
     // 跟踪创建的通知
     static TArray<TSharedPtr<SNotificationItem>> CreatedNotifications;
+    
+    // 通知按钮点击事件委托实例
+    static FOnNotificationButtonClicked OnNotificationButtonClicked;
+    
+    // 通知ID映射表 (NotificationId -> NotificationItem)
+    static TMap<FString, TSharedPtr<SNotificationItem>> NotificationMap;
+    
+    // 注册的事件接收者列表
+    static TArray<TWeakObjectPtr<UObject>> NotificationEventReceivers;
 
-    UFUNCTION(BlueprintCallable, meta = (DisplayName = "Show Editor Notification", Keywords = "调用编辑器通知 显示通知"), Category = "UtilityExtend")
-    static void ShowEditorNotification(
-        UPARAM(DisplayName = "消息内容") const FString& Message, 
+    // 创建常规通知节点（不带按钮）
+    UFUNCTION(BlueprintCallable, meta = (DisplayName = "Create Editor Notification", Keywords = "创建编辑器通知 显示通知"), Category = "UtilityExtend")
+    static UPARAM(DisplayName = "通知ID") FString CreateEditorNotification(
+        UPARAM(DisplayName = "消息内容") const FString& Message,
         UPARAM(DisplayName = "通知类型") EEditorNotificationType NotificationType = EEditorNotificationType::Default,
-        UPARAM(DisplayName = "持续时间") float Duration = 5.0f, 
+        UPARAM(DisplayName = "持续时间") float Duration = 5.0f,
         UPARAM(DisplayName = "自动过期") bool bAutoExpire = true
     );
 
-    UFUNCTION(BlueprintCallable, meta = (DisplayName = "Remove All Editor Notifications", Keywords = "移除通知 清除通知"), Category = "UtilityExtend")
-    static void RemoveAllEditorNotifications();
+    // 创建带加载动画的通知节点（支持按钮）
+    UFUNCTION(BlueprintCallable, meta = (DisplayName = "Create Loading Notification", Keywords = "创建加载通知 带按钮通知"), Category = "UtilityExtend")
+    static UPARAM(DisplayName = "通知ID") FString CreateLoadingNotification(
+        UPARAM(DisplayName = "消息内容") const FString& Message,
+        UPARAM(DisplayName = "通知对象") UUtilityLoadingNotification*& OutNotificationObject,
+        UPARAM(DisplayName = "显示按钮") bool bShowButton = false,
+        UPARAM(DisplayName = "按钮文本") const FString& ButtonText = TEXT("确定"),
+        UPARAM(DisplayName = "按钮提示") const FString& ButtonTooltip = TEXT("")
+    );
+
+    // 统一的清除通知节点
+    UFUNCTION(BlueprintCallable, meta = (DisplayName = "Remove Editor Notification", Keywords = "移除编辑器通知 清除通知 删除通知"), Category = "UtilityExtend")
+    static UPARAM(DisplayName = "移除成功") bool RemoveEditorNotification(
+        UPARAM(DisplayName = "通知ID (空=全部清除)") const FString& NotificationId = TEXT(""),
+        UPARAM(DisplayName = "清除全部") bool bRemoveAll = false
+    );
 
     UFUNCTION(BlueprintCallable, meta = (DisplayName = "Restart Editor", Keywords = "重启编辑器 重新启动"), Category = "UtilityExtend")
     static void RestartEditor();
@@ -258,5 +303,19 @@ public:
     ))
     static UPARAM(DisplayName = "关闭成功") bool CloseUtilityWidgetTab(
         UPARAM(DisplayName = "标签页ID") const FString& TabId
+    );
+
+    // 新的加载通知函数 - 返回通知对象
+    UFUNCTION(BlueprintCallable, meta = (
+        DisplayName = "Create Loading Notification Object", 
+        Keywords = "创建加载通知对象 带按钮通知 委托绑定",
+        ToolTip = "创建一个可以绑定事件的加载通知对象",
+        Category = "UtilityExtend|Notification"
+    ))
+    static UPARAM(DisplayName = "通知对象") UUtilityLoadingNotification* CreateLoadingNotificationObject(
+        UPARAM(DisplayName = "标题") const FString& Title,
+        UPARAM(DisplayName = "内容") const FString& Text,
+        UPARAM(DisplayName = "按钮文本数组") const TArray<FString>& ButtonTexts,
+        UPARAM(DisplayName = "显示进度条") bool bShowProgressBar = true
     );
 };
