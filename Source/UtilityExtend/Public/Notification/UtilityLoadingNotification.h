@@ -31,7 +31,6 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Notification Events")
 	FOnLoadingNotificationCompleted OnCompleted;
 
-	// 新的委托名称（与蓝图库中使用的名称一致）
 	UPROPERTY(BlueprintAssignable, Category = "Notification Events")
 	FOnLoadingNotificationButtonClicked OnLoadingNotificationButtonClicked;
 

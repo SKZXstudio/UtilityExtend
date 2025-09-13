@@ -18,6 +18,8 @@
 #include "Async/Async.h"
 #include "Misc/FileHelper.h"
 #include "HAL/PlatformFile.h"
+#include "Framework/Docking/TabManager.h"
+#include "Widgets/Docking/SDockTab.h"
 #include "GenericPlatform/GenericPlatformFile.h"
 #include "Developer/DesktopPlatform/Public/IDesktopPlatform.h"
 #include "Developer/DesktopPlatform/Public/DesktopPlatformModule.h"
@@ -142,7 +144,7 @@ FString UUtilityExtendBPLibrary::CreateEditorNotification(
 }
 
 // 创建带加载动画的通知函数（支持按钮）
-FString UUtilityExtendBPLibrary::CreateLoadingNotification(
+FString UUtilityExtendBPLibrary::CreateEditorLoadingNotification(
     const FString& Message,
     UUtilityLoadingNotification*& OutNotificationObject,
     bool bShowButton,
@@ -246,6 +248,32 @@ FString UUtilityExtendBPLibrary::CreateLoadingNotification(
     return NotificationId;
 }
 
+// 创建复杂通知
+UUtilityLoadingNotification* UUtilityExtendBPLibrary::CreateComplexNotification(const FString& Title, const FString& Text, const TArray<FString>& ButtonTexts, bool bShowProgressBar)
+{
+    // 创建通知对象实例
+    UUtilityLoadingNotification* NotificationObject = NewObject<UUtilityLoadingNotification>();
+    
+    if (NotificationObject)
+    {
+        // 创建通知
+        bool bSuccess = NotificationObject->CreateNotification(Title, Text, ButtonTexts, bShowProgressBar);
+        
+        if (bSuccess)
+        {
+            return NotificationObject;
+    }
+    else
+    {
+            // 创建失败，清理对象
+            NotificationObject->MarkAsGarbage();
+            return nullptr;
+        }
+    }
+    
+    return nullptr;
+}
+
 // 统一的清除通知函数
 bool UUtilityExtendBPLibrary::RemoveEditorNotification(const FString& NotificationId, bool bRemoveAll)
 {
@@ -275,15 +303,15 @@ bool UUtilityExtendBPLibrary::RemoveEditorNotification(const FString& Notificati
             NotificationItem->ExpireAndFadeout();
             NotificationMap.Remove(NotificationId);
             CreatedNotifications.Remove(NotificationItem);
-            return true;
-        }
+        return true;
+    }
         NotificationMap.Remove(NotificationId);
     }
-    return false;
-}
+        return false;
+    }
 
-
-
+// ------------------------------------编辑器操作相关函数------------------------------------
+// 重启引擎
 void UUtilityExtendBPLibrary::RestartEditor()
 {
     // 检查编辑器是否可用
@@ -307,349 +335,128 @@ void UUtilityExtendBPLibrary::RestartEditor()
     }
 }
 
-// 外部软件调用相关函数实现
-bool UUtilityExtendBPLibrary::LaunchExternalApplication(const FString& ExecutablePath, const FString& Arguments, const FString& WorkingDirectory, bool bLaunchDetached, bool bLaunchHidden, bool bLaunchMinimized, bool bLaunchMaximized, bool bLaunchNormal)
+// 运行编辑器工具控件
+bool UUtilityExtendBPLibrary::RunUtilityWidget(UEditorUtilityWidgetBlueprint* WidgetBlueprint, FString& OutTabId)
 {
-    // 检查可执行文件是否存在
-    if (!FPaths::FileExists(ExecutablePath))
+    OutTabId = FString();
+    
+    // 检查是否在编辑器环境中
+    if (!GEditor)
     {
-        UE_LOG(LogTemp, Error, TEXT("Executable file not found: %s"), *ExecutablePath);
+        UE_LOG(LogTemp, Error, TEXT("RunUtilityWidget: Not in editor environment"));
         return false;
     }
 
-    // 确定工作目录
-    FString FinalWorkingDir = WorkingDirectory;
-    if (FinalWorkingDir.IsEmpty())
+    // 检查Widget蓝图是否有效
+    if (!WidgetBlueprint)
     {
-        FinalWorkingDir = FPaths::GetPath(ExecutablePath);
+        UE_LOG(LogTemp, Error, TEXT("RunUtilityWidget: WidgetBlueprint is null"));
+        return false;
     }
-
-    // 构建启动参数
-    uint32 ProcessFlags = 0;
-    if (bLaunchDetached)
-    {
-        ProcessFlags |= PROCESS_DETACHED;
-    }
-    if (bLaunchHidden)
-    {
-        ProcessFlags |= CREATE_NO_WINDOW;
-    }
-    if (bLaunchMinimized)
-    {
-        ProcessFlags |= CREATE_MINIMIZED;
-    }
-    if (bLaunchMaximized)
-    {
-        ProcessFlags |= CREATE_MAXIMIZED;
-    }
-    if (bLaunchNormal)
-    {
-        ProcessFlags |= CREATE_NEW_CONSOLE;
-    }
-
-    // 启动进程 - 使用ShellExecute来正确处理工作目录
-#if PLATFORM_WINDOWS
-    SHELLEXECUTEINFO sei = {0};
-    sei.cbSize = sizeof(SHELLEXECUTEINFO);
-    sei.lpVerb = TEXT("open");
-    sei.lpFile = *ExecutablePath;
-    sei.lpParameters = Arguments.IsEmpty() ? NULL : *Arguments;
-    sei.lpDirectory = FinalWorkingDir.IsEmpty() ? NULL : *FinalWorkingDir;
-    sei.nShow = SW_SHOW;
-    sei.fMask = SEE_MASK_NOCLOSEPROCESS;
     
-    if (ShellExecuteEx(&sei))
+    // 获取EditorUtilitySubsystem
+    UEditorUtilitySubsystem* EditorUtilitySubsystem = GEditor->GetEditorSubsystem<UEditorUtilitySubsystem>();
+    if (!EditorUtilitySubsystem)
     {
-        if (sei.hProcess)
+        UE_LOG(LogTemp, Error, TEXT("RunUtilityWidget: Failed to get EditorUtilitySubsystem"));
+    return false;
+    }
+    
+    try
+    {
+        UE_LOG(LogTemp, Log, TEXT("RunUtilityWidget: Attempting to spawn widget blueprint: %s"), 
+               *WidgetBlueprint->GetName());
+        
+        // 使用SpawnAndRegisterTabAndGetID方法运行Widget，可以设置自定义标签页名称
+        FName TabId;
+        UEditorUtilityWidget* SpawnedWidget = EditorUtilitySubsystem->SpawnAndRegisterTabAndGetID(
+            WidgetBlueprint, 
+            TabId
+        );
+        
+        if (!SpawnedWidget)
         {
-            CloseHandle(sei.hProcess);
-        }
-        UE_LOG(LogTemp, Log, TEXT("Successfully launched external application: %s with working directory: %s"), *ExecutablePath, *FinalWorkingDir);
-        return true;
-    }
-    else
-    {
-        DWORD ErrorCode = GetLastError();
-        UE_LOG(LogTemp, Error, TEXT("Failed to launch external application: %s. Error code: %u"), *ExecutablePath, ErrorCode);
+            UE_LOG(LogTemp, Error, TEXT("RunUtilityWidget: Failed to spawn widget"));
         return false;
     }
-#else
-    // 非Windows平台的简单实现
-    FString Command = FString::Printf(TEXT("start \"\" \"%s\""), *ExecutablePath);
-    if (!Arguments.IsEmpty())
+
+        // 标签页创建成功
+        
+        // 成功创建Widget
+        OutTabId = TabId.ToString();
+        UE_LOG(LogTemp, Log, TEXT("RunUtilityWidget: Successfully spawned widget: %s with TabId: %s"), 
+               *WidgetBlueprint->GetName(), *OutTabId);
+                        return true;
+                    }
+    catch (const std::exception& e)
+                    {
+        UE_LOG(LogTemp, Error, TEXT("RunUtilityWidget: Exception occurred: %s"), ANSI_TO_TCHAR(e.what()));
+                        return false;
+                    }
+    catch (...)
     {
-        Command = FString::Printf(TEXT("start \"\" \"%s\" %s"), *ExecutablePath, *Arguments);
-    }
-    
-    int32 Result = system(TCHAR_TO_UTF8(*Command));
-    
-    if (Result == 0)
-    {
-        UE_LOG(LogTemp, Log, TEXT("Successfully launched external application: %s"), *ExecutablePath);
-        return true;
-    }
-    else
-    {
-        UE_LOG(LogTemp, Error, TEXT("Failed to launch external application: %s"), *ExecutablePath);
+        UE_LOG(LogTemp, Error, TEXT("RunUtilityWidget: Unknown exception occurred"));
         return false;
     }
-#endif
 }
 
-bool UUtilityExtendBPLibrary::LaunchExternalApplicationWithInfo(const FString& ExecutablePath, const FString& Arguments, const FString& WorkingDirectory, bool bLaunchDetached, bool bLaunchHidden, bool bLaunchMinimized, bool bLaunchMaximized, bool bLaunchNormal, FString& OutProcessID, FString& OutErrorMessage)
+// 关闭编辑器工具控件
+bool UUtilityExtendBPLibrary::CloseUtilityWidgetTab(const FString& TabId)
 {
-    // 检查可执行文件是否存在
-    if (!FPaths::FileExists(ExecutablePath))
+    // 检查是否在编辑器环境中
+    if (!GEditor)
     {
-        OutErrorMessage = TEXT("可执行文件不存在");
-        OutProcessID = TEXT("");
+        UE_LOG(LogTemp, Error, TEXT("CloseUtilityWidgetTab: Not in editor environment"));
+    return false;
+    }
+    
+    // 检查TabId是否有效
+    if (TabId.IsEmpty())
+    {
+        UE_LOG(LogTemp, Error, TEXT("CloseUtilityWidgetTab: TabId is empty"));
         return false;
     }
-
-    // 确定工作目录
-    FString FinalWorkingDir = WorkingDirectory;
-    if (FinalWorkingDir.IsEmpty())
-    {
-        FinalWorkingDir = FPaths::GetPath(ExecutablePath);
-    }
-
-    // 构建启动参数
-    uint32 ProcessFlags = 0;
-    if (bLaunchDetached)
-    {
-        ProcessFlags |= PROCESS_DETACHED;
-    }
-    if (bLaunchHidden)
-    {
-        ProcessFlags |= CREATE_NO_WINDOW;
-    }
-    if (bLaunchMinimized)
-    {
-        ProcessFlags |= CREATE_MINIMIZED;
-    }
-    if (bLaunchMaximized)
-    {
-        ProcessFlags |= CREATE_MAXIMIZED;
-    }
-    if (bLaunchNormal)
-    {
-        ProcessFlags |= CREATE_NEW_CONSOLE;
-    }
-
-    // 启动进程 - 使用ShellExecute来正确处理工作目录
-#if PLATFORM_WINDOWS
-    SHELLEXECUTEINFO sei = {0};
-    sei.cbSize = sizeof(SHELLEXECUTEINFO);
-    sei.lpVerb = TEXT("open");
-    sei.lpFile = *ExecutablePath;
-    sei.lpParameters = Arguments.IsEmpty() ? NULL : *Arguments;
-    sei.lpDirectory = FinalWorkingDir.IsEmpty() ? NULL : *FinalWorkingDir;
-    sei.nShow = SW_SHOW;
-    sei.fMask = SEE_MASK_NOCLOSEPROCESS;
     
-    if (ShellExecuteEx(&sei))
+    // 获取EditorUtilitySubsystem
+    UEditorUtilitySubsystem* EditorUtilitySubsystem = GEditor->GetEditorSubsystem<UEditorUtilitySubsystem>();
+    if (!EditorUtilitySubsystem)
     {
-        if (sei.hProcess)
+        UE_LOG(LogTemp, Error, TEXT("CloseUtilityWidgetTab: Failed to get EditorUtilitySubsystem"));
+        return false;
+    }
+    
+    try
+    {
+        FName TabName = FName(*TabId);
+        UE_LOG(LogTemp, Log, TEXT("CloseUtilityWidgetTab: Attempting to close tab with ID: %s"), *TabId);
+        
+        // 尝试关闭指定的标签页
+        bool bClosed = EditorUtilitySubsystem->CloseTabByID(TabName);
+        
+        if (bClosed)
         {
-            // 获取进程ID
-            DWORD ProcessId = GetProcessId(sei.hProcess);
-            OutProcessID = FString::Printf(TEXT("%u"), ProcessId);
-            CloseHandle(sei.hProcess);
+            UE_LOG(LogTemp, Log, TEXT("CloseUtilityWidgetTab: Successfully closed tab with ID: %s"), *TabId);
         }
         else
         {
-            OutProcessID = TEXT("0");
-        }
-        OutErrorMessage = TEXT("");
-        UE_LOG(LogTemp, Log, TEXT("Successfully launched external application: %s with working directory: %s"), *ExecutablePath, *FinalWorkingDir);
-        return true;
-    }
-    else
-    {
-        DWORD ErrorCode = GetLastError();
-        OutProcessID = TEXT("");
-        OutErrorMessage = FString::Printf(TEXT("启动失败，错误代码: %u"), ErrorCode);
-        UE_LOG(LogTemp, Error, TEXT("Failed to launch external application: %s. Error code: %u"), *ExecutablePath, ErrorCode);
-        return false;
-    }
-#else
-    // 非Windows平台的简单实现
-    FString Command = FString::Printf(TEXT("start \"\" \"%s\""), *ExecutablePath);
-    if (!Arguments.IsEmpty())
-    {
-        Command = FString::Printf(TEXT("start \"\" \"%s\" %s"), *ExecutablePath, *Arguments);
-    }
-    
-    int32 Result = system(TCHAR_TO_UTF8(*Command));
-    
-    if (Result == 0)
-    {
-        // 获取进程ID（简化实现）
-        OutProcessID = TEXT("0"); // 使用system命令无法直接获取PID
-        OutErrorMessage = TEXT("");
-        UE_LOG(LogTemp, Log, TEXT("Successfully launched external application: %s"), *ExecutablePath);
-        return true;
-    }
-    else
-    {
-        OutProcessID = TEXT("");
-        OutErrorMessage = TEXT("启动进程失败");
-        UE_LOG(LogTemp, Error, TEXT("Failed to launch external application: %s"), *ExecutablePath);
-        return false;
-    }
-#endif
-}
-
-bool UUtilityExtendBPLibrary::IsExternalApplicationRunning(const FString& ProcessName)
-{
-#if PLATFORM_WINDOWS
-    HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-    if (hSnapshot == INVALID_HANDLE_VALUE)
-    {
-        return false;
-    }
-
-    PROCESSENTRY32 pe32;
-    pe32.dwSize = sizeof(PROCESSENTRY32);
-
-    if (Process32First(hSnapshot, &pe32))
-    {
-        do
-        {
-            FString CurrentProcessName = FString(pe32.szExeFile);
-            if (CurrentProcessName.Contains(ProcessName))
-            {
-                CloseHandle(hSnapshot);
-                return true;
-            }
-        } while (Process32Next(hSnapshot, &pe32));
-    }
-
-    CloseHandle(hSnapshot);
-    return false;
-#else
-    // 非Windows平台的简单实现
-    TArray<FString> ProcessList = GetAllRunningProcesses();
-    for (const FString& Process : ProcessList)
-    {
-        if (Process.Contains(ProcessName))
-        {
-            return true;
-        }
-    }
-    return false;
-#endif
-}
-
-bool UUtilityExtendBPLibrary::TerminateExternalApplication(const FString& ProcessName)
-{
-#if PLATFORM_WINDOWS
-    HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-    if (hSnapshot == INVALID_HANDLE_VALUE)
-    {
-        return false;
-    }
-
-    PROCESSENTRY32 pe32;
-    pe32.dwSize = sizeof(PROCESSENTRY32);
-
-    if (Process32First(hSnapshot, &pe32))
-    {
-        do
-        {
-            FString CurrentProcessName = FString(pe32.szExeFile);
-            if (CurrentProcessName.Contains(ProcessName))
-            {
-                HANDLE hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, pe32.th32ProcessID);
-                if (hProcess != NULL)
-                {
-                    BOOL bResult = TerminateProcess(hProcess, 0);
-                    CloseHandle(hProcess);
-                    CloseHandle(hSnapshot);
-                    
-                    if (bResult)
-                    {
-                        UE_LOG(LogTemp, Log, TEXT("Successfully terminated process: %s (PID: %u)"), *ProcessName, pe32.th32ProcessID);
-                        return true;
-                    }
-                    else
-                    {
-                        UE_LOG(LogTemp, Error, TEXT("Failed to terminate process: %s (PID: %u)"), *ProcessName, pe32.th32ProcessID);
-                        return false;
-                    }
-                }
-            }
-        } while (Process32Next(hSnapshot, &pe32));
-    }
-
-    CloseHandle(hSnapshot);
-    UE_LOG(LogTemp, Warning, TEXT("Process not found: %s"), *ProcessName);
-    return false;
-#else
-    // 非Windows平台的简单实现
-    UE_LOG(LogTemp, Warning, TEXT("TerminateExternalApplication called on non-Windows platform. This function requires proper implementation with system APIs."));
-    return false;
-#endif
-}
-
-TArray<FString> UUtilityExtendBPLibrary::GetAllRunningProcesses()
-{
-    TArray<FString> ProcessList;
-    
-#if PLATFORM_WINDOWS
-    HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-    if (hSnapshot == INVALID_HANDLE_VALUE)
-    {
-        return ProcessList;
-    }
-
-    PROCESSENTRY32 pe32;
-    pe32.dwSize = sizeof(PROCESSENTRY32);
-
-    if (Process32First(hSnapshot, &pe32))
-    {
-        do
-        {
-            FString ProcessName = FString(pe32.szExeFile);
-            if (!ProcessName.IsEmpty())
-            {
-                ProcessList.Add(ProcessName);
-            }
-        } while (Process32Next(hSnapshot, &pe32));
-    }
-
-    CloseHandle(hSnapshot);
-#else
-    // 非Windows平台的简单实现
-    UE_LOG(LogTemp, Warning, TEXT("GetAllRunningProcesses called on non-Windows platform. This function requires proper implementation with system APIs."));
-#endif
-    
-    return ProcessList;
-}
-
-bool UUtilityExtendBPLibrary::WaitForExternalApplication(const FString& ProcessName, float TimeoutSeconds)
-{
-    // 等待外部应用程序启动
-    float ElapsedTime = 0.0f;
-    const float CheckInterval = 0.1f; // 每0.1秒检查一次
-    
-    while (ElapsedTime < TimeoutSeconds)
-    {
-        if (IsExternalApplicationRunning(ProcessName))
-        {
-            UE_LOG(LogTemp, Log, TEXT("External application %s is now running"), *ProcessName);
-            return true;
+            UE_LOG(LogTemp, Warning, TEXT("CloseUtilityWidgetTab: Failed to close tab with ID: %s (tab may not exist)"), *TabId);
         }
         
-        // 等待一小段时间
-        FPlatformProcess::Sleep(CheckInterval);
-        ElapsedTime += CheckInterval;
+        return bClosed;
     }
-    
-    UE_LOG(LogTemp, Warning, TEXT("Timeout waiting for external application: %s"), *ProcessName);
-    return false;
+    catch (const std::exception& e)
+    {
+        UE_LOG(LogTemp, Error, TEXT("CloseUtilityWidgetTab: Exception occurred: %s"), ANSI_TO_TCHAR(e.what()));
+        return false;
+    }
+    catch (...)
+    {
+        UE_LOG(LogTemp, Error, TEXT("CloseUtilityWidgetTab: Unknown exception occurred"));
+        return false;
+    }
 }
 
+// ------------------------------------文件读写相关函数------------------------------------
 // 文件读写相关函数实现
 bool UUtilityExtendBPLibrary::ReadTextFile(const FString& FilePath, FString& OutContent, FString& OutErrorMessage)
 {
@@ -1142,146 +949,353 @@ TArray<FString> UUtilityExtendBPLibrary::OpenFileDialog(
 }
 
 
-bool UUtilityExtendBPLibrary::RunUtilityWidget(UEditorUtilityWidgetBlueprint* WidgetBlueprint, const FString& TabDisplayName, bool& bOutSuccess, FString& OutTabId)
+
+
+// ------------------------------------实验性功能------------------------------------
+// 外部软件调用相关函数实现
+bool UUtilityExtendBPLibrary::LaunchExternalApplication(const FString& ExecutablePath, const FString& Arguments, const FString& WorkingDirectory, bool bLaunchDetached, bool bLaunchHidden, bool bLaunchMinimized, bool bLaunchMaximized, bool bLaunchNormal)
 {
-    bOutSuccess = false;
-    OutTabId = FString();
-    
-    // 检查是否在编辑器环境中
-    if (!GEditor)
+    // 检查可执行文件是否存在
+    if (!FPaths::FileExists(ExecutablePath))
     {
-        UE_LOG(LogTemp, Error, TEXT("RunUtilityWidget: Not in editor environment"));
+        UE_LOG(LogTemp, Error, TEXT("Executable file not found: %s"), *ExecutablePath);
         return false;
     }
-    
-    // 检查Widget蓝图是否有效
-    if (!WidgetBlueprint)
+
+    // 确定工作目录
+    FString FinalWorkingDir = WorkingDirectory;
+    if (FinalWorkingDir.IsEmpty())
     {
-        UE_LOG(LogTemp, Error, TEXT("RunUtilityWidget: WidgetBlueprint is null"));
-        return false;
+        FinalWorkingDir = FPaths::GetPath(ExecutablePath);
     }
-    
-    // 获取EditorUtilitySubsystem
-    UEditorUtilitySubsystem* EditorUtilitySubsystem = GEditor->GetEditorSubsystem<UEditorUtilitySubsystem>();
-    if (!EditorUtilitySubsystem)
+
+    // 构建启动参数
+    uint32 ProcessFlags = 0;
+    if (bLaunchDetached)
     {
-        UE_LOG(LogTemp, Error, TEXT("RunUtilityWidget: Failed to get EditorUtilitySubsystem"));
-        return false;
+        ProcessFlags |= PROCESS_DETACHED;
     }
-    
-    try
+    if (bLaunchHidden)
     {
-        // 确定显示名称
-        // TabDisplayName参数会被传递给Tab系统用于显示
-        
-        UE_LOG(LogTemp, Log, TEXT("RunUtilityWidget: Attempting to spawn widget blueprint: %s with display name: %s"), 
-               *WidgetBlueprint->GetName(), *TabDisplayName);
-        
-        // 直接使用SpawnAndRegisterTab方法运行Widget
-        UEditorUtilityWidget* SpawnedWidget = EditorUtilitySubsystem->SpawnAndRegisterTab(WidgetBlueprint);
-        if (!SpawnedWidget)
+        ProcessFlags |= CREATE_NO_WINDOW;
+    }
+    if (bLaunchMinimized)
+    {
+        ProcessFlags |= CREATE_MINIMIZED;
+    }
+    if (bLaunchMaximized)
+    {
+        ProcessFlags |= CREATE_MAXIMIZED;
+    }
+    if (bLaunchNormal)
+    {
+        ProcessFlags |= CREATE_NEW_CONSOLE;
+    }
+
+    // 启动进程 - 使用ShellExecute来正确处理工作目录
+#if PLATFORM_WINDOWS
+    SHELLEXECUTEINFO sei = {0};
+    sei.cbSize = sizeof(SHELLEXECUTEINFO);
+    sei.lpVerb = TEXT("open");
+    sei.lpFile = *ExecutablePath;
+    sei.lpParameters = Arguments.IsEmpty() ? NULL : *Arguments;
+    sei.lpDirectory = FinalWorkingDir.IsEmpty() ? NULL : *FinalWorkingDir;
+    sei.nShow = SW_SHOW;
+    sei.fMask = SEE_MASK_NOCLOSEPROCESS;
+    
+    if (ShellExecuteEx(&sei))
+    {
+        if (sei.hProcess)
         {
-            UE_LOG(LogTemp, Error, TEXT("RunUtilityWidget: Failed to spawn widget"));
-            return false;
+            CloseHandle(sei.hProcess);
         }
-        
-        // 成功创建Widget
-        bOutSuccess = true;
-        // 注意：UEditorUtilityWidget没有直接的GetTabId方法，TabID由系统内部管理
-        OutTabId = FString::Printf(TEXT("UtilityWidget_%s"), *WidgetBlueprint->GetName());
-        UE_LOG(LogTemp, Log, TEXT("RunUtilityWidget: Successfully spawned widget: %s"), *WidgetBlueprint->GetName());
+        UE_LOG(LogTemp, Log, TEXT("Successfully launched external application: %s with working directory: %s"), *ExecutablePath, *FinalWorkingDir);
         return true;
     }
-    catch (const std::exception& e)
+    else
     {
-        UE_LOG(LogTemp, Error, TEXT("RunUtilityWidget: Exception occurred: %s"), ANSI_TO_TCHAR(e.what()));
+        DWORD ErrorCode = GetLastError();
+        UE_LOG(LogTemp, Error, TEXT("Failed to launch external application: %s. Error code: %u"), *ExecutablePath, ErrorCode);
         return false;
     }
-    catch (...)
+#else
+    // 非Windows平台的简单实现
+    FString Command = FString::Printf(TEXT("start \"\" \"%s\""), *ExecutablePath);
+    if (!Arguments.IsEmpty())
     {
-        UE_LOG(LogTemp, Error, TEXT("RunUtilityWidget: Unknown exception occurred"));
+        Command = FString::Printf(TEXT("start \"\" \"%s\" %s"), *ExecutablePath, *Arguments);
+    }
+    
+    int32 Result = system(TCHAR_TO_UTF8(*Command));
+    
+    if (Result == 0)
+    {
+        UE_LOG(LogTemp, Log, TEXT("Successfully launched external application: %s"), *ExecutablePath);
+        return true;
+    }
+    else
+    {
+        UE_LOG(LogTemp, Error, TEXT("Failed to launch external application: %s"), *ExecutablePath);
         return false;
     }
+#endif
 }
 
-bool UUtilityExtendBPLibrary::CloseUtilityWidgetTab(const FString& TabId)
+bool UUtilityExtendBPLibrary::LaunchExternalApplicationWithInfo(const FString& ExecutablePath, const FString& Arguments, const FString& WorkingDirectory, bool bLaunchDetached, bool bLaunchHidden, bool bLaunchMinimized, bool bLaunchMaximized, bool bLaunchNormal, FString& OutProcessID, FString& OutErrorMessage)
 {
-    // 检查是否在编辑器环境中
-    if (!GEditor)
+    // 检查可执行文件是否存在
+    if (!FPaths::FileExists(ExecutablePath))
     {
-        UE_LOG(LogTemp, Error, TEXT("CloseUtilityWidgetTab: Not in editor environment"));
+        OutErrorMessage = TEXT("可执行文件不存在");
+        OutProcessID = TEXT("");
         return false;
     }
     
-    // 检查TabId是否有效
-    if (TabId.IsEmpty())
+    // 确定工作目录
+    FString FinalWorkingDir = WorkingDirectory;
+    if (FinalWorkingDir.IsEmpty())
     {
-        UE_LOG(LogTemp, Error, TEXT("CloseUtilityWidgetTab: TabId is empty"));
-        return false;
+        FinalWorkingDir = FPaths::GetPath(ExecutablePath);
     }
-    
-    // 获取EditorUtilitySubsystem
-    UEditorUtilitySubsystem* EditorUtilitySubsystem = GEditor->GetEditorSubsystem<UEditorUtilitySubsystem>();
-    if (!EditorUtilitySubsystem)
+
+    // 构建启动参数
+    uint32 ProcessFlags = 0;
+    if (bLaunchDetached)
     {
-        UE_LOG(LogTemp, Error, TEXT("CloseUtilityWidgetTab: Failed to get EditorUtilitySubsystem"));
-        return false;
+        ProcessFlags |= PROCESS_DETACHED;
     }
-    
-    try
+    if (bLaunchHidden)
     {
-        FName TabName = FName(*TabId);
-        UE_LOG(LogTemp, Log, TEXT("CloseUtilityWidgetTab: Attempting to close tab with ID: %s"), *TabId);
-        
-        // 尝试关闭指定的标签页
-        bool bClosed = EditorUtilitySubsystem->CloseTabByID(TabName);
-        
-        if (bClosed)
+        ProcessFlags |= CREATE_NO_WINDOW;
+    }
+    if (bLaunchMinimized)
+    {
+        ProcessFlags |= CREATE_MINIMIZED;
+    }
+    if (bLaunchMaximized)
+    {
+        ProcessFlags |= CREATE_MAXIMIZED;
+    }
+    if (bLaunchNormal)
+    {
+        ProcessFlags |= CREATE_NEW_CONSOLE;
+    }
+
+    // 启动进程 - 使用ShellExecute来正确处理工作目录
+#if PLATFORM_WINDOWS
+    SHELLEXECUTEINFO sei = {0};
+    sei.cbSize = sizeof(SHELLEXECUTEINFO);
+    sei.lpVerb = TEXT("open");
+    sei.lpFile = *ExecutablePath;
+    sei.lpParameters = Arguments.IsEmpty() ? NULL : *Arguments;
+    sei.lpDirectory = FinalWorkingDir.IsEmpty() ? NULL : *FinalWorkingDir;
+    sei.nShow = SW_SHOW;
+    sei.fMask = SEE_MASK_NOCLOSEPROCESS;
+    
+    if (ShellExecuteEx(&sei))
+    {
+        if (sei.hProcess)
         {
-            UE_LOG(LogTemp, Log, TEXT("CloseUtilityWidgetTab: Successfully closed tab with ID: %s"), *TabId);
+            // 获取进程ID
+            DWORD ProcessId = GetProcessId(sei.hProcess);
+            OutProcessID = FString::Printf(TEXT("%u"), ProcessId);
+            CloseHandle(sei.hProcess);
         }
         else
         {
-            UE_LOG(LogTemp, Warning, TEXT("CloseUtilityWidgetTab: Failed to close tab with ID: %s (tab may not exist)"), *TabId);
+            OutProcessID = TEXT("0");
         }
-        
-        return bClosed;
+        OutErrorMessage = TEXT("");
+        UE_LOG(LogTemp, Log, TEXT("Successfully launched external application: %s with working directory: %s"), *ExecutablePath, *FinalWorkingDir);
+        return true;
     }
-    catch (const std::exception& e)
+    else
     {
-        UE_LOG(LogTemp, Error, TEXT("CloseUtilityWidgetTab: Exception occurred: %s"), ANSI_TO_TCHAR(e.what()));
+        DWORD ErrorCode = GetLastError();
+        OutProcessID = TEXT("");
+        OutErrorMessage = FString::Printf(TEXT("启动失败，错误代码: %u"), ErrorCode);
+        UE_LOG(LogTemp, Error, TEXT("Failed to launch external application: %s. Error code: %u"), *ExecutablePath, ErrorCode);
         return false;
     }
-    catch (...)
+#else
+    // 非Windows平台的简单实现
+    FString Command = FString::Printf(TEXT("start \"\" \"%s\""), *ExecutablePath);
+    if (!Arguments.IsEmpty())
     {
-        UE_LOG(LogTemp, Error, TEXT("CloseUtilityWidgetTab: Unknown exception occurred"));
+        Command = FString::Printf(TEXT("start \"\" \"%s\" %s"), *ExecutablePath, *Arguments);
+    }
+    
+    int32 Result = system(TCHAR_TO_UTF8(*Command));
+    
+    if (Result == 0)
+    {
+        // 获取进程ID（简化实现）
+        OutProcessID = TEXT("0"); // 使用system命令无法直接获取PID
+        OutErrorMessage = TEXT("");
+        UE_LOG(LogTemp, Log, TEXT("Successfully launched external application: %s"), *ExecutablePath);
+        return true;
+    }
+    else
+    {
+        OutProcessID = TEXT("");
+        OutErrorMessage = TEXT("启动进程失败");
+        UE_LOG(LogTemp, Error, TEXT("Failed to launch external application: %s"), *ExecutablePath);
         return false;
     }
+#endif
 }
 
-UUtilityLoadingNotification* UUtilityExtendBPLibrary::CreateLoadingNotificationObject(const FString& Title, const FString& Text, const TArray<FString>& ButtonTexts, bool bShowProgressBar)
+bool UUtilityExtendBPLibrary::IsExternalApplicationRunning(const FString& ProcessName)
 {
-    // 创建通知对象实例
-    UUtilityLoadingNotification* NotificationObject = NewObject<UUtilityLoadingNotification>();
-    
-    if (NotificationObject)
+#if PLATFORM_WINDOWS
+    HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+    if (hSnapshot == INVALID_HANDLE_VALUE)
     {
-        // 创建通知
-        bool bSuccess = NotificationObject->CreateNotification(Title, Text, ButtonTexts, bShowProgressBar);
-        
-        if (bSuccess)
+        return false;
+    }
+    
+    PROCESSENTRY32 pe32;
+    pe32.dwSize = sizeof(PROCESSENTRY32);
+
+    if (Process32First(hSnapshot, &pe32))
+    {
+        do
         {
-            return NotificationObject;
+            FString CurrentProcessName = FString(pe32.szExeFile);
+            if (CurrentProcessName.Contains(ProcessName))
+            {
+                CloseHandle(hSnapshot);
+                return true;
+            }
+        } while (Process32Next(hSnapshot, &pe32));
+    }
+
+    CloseHandle(hSnapshot);
+    return false;
+#else
+    // 非Windows平台的简单实现
+    TArray<FString> ProcessList = GetAllRunningProcesses();
+    for (const FString& Process : ProcessList)
+    {
+        if (Process.Contains(ProcessName))
+        {
+            return true;
+        }
+    }
+        return false;
+#endif
+}
+
+bool UUtilityExtendBPLibrary::TerminateExternalApplication(const FString& ProcessName)
+{
+#if PLATFORM_WINDOWS
+    HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+    if (hSnapshot == INVALID_HANDLE_VALUE)
+    {
+        return false;
+    }
+
+    PROCESSENTRY32 pe32;
+    pe32.dwSize = sizeof(PROCESSENTRY32);
+
+    if (Process32First(hSnapshot, &pe32))
+    {
+        do
+        {
+            FString CurrentProcessName = FString(pe32.szExeFile);
+            if (CurrentProcessName.Contains(ProcessName))
+            {
+                HANDLE hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, pe32.th32ProcessID);
+                if (hProcess != NULL)
+                {
+                    BOOL bResult = TerminateProcess(hProcess, 0);
+                    CloseHandle(hProcess);
+                    CloseHandle(hSnapshot);
+                    
+                    if (bResult)
+                    {
+                        UE_LOG(LogTemp, Log, TEXT("Successfully terminated process: %s (PID: %u)"), *ProcessName, pe32.th32ProcessID);
+                        return true;
         }
         else
         {
-            // 创建失败，清理对象
-            NotificationObject->MarkAsGarbage();
-            return nullptr;
+                        UE_LOG(LogTemp, Error, TEXT("Failed to terminate process: %s (PID: %u)"), *ProcessName, pe32.th32ProcessID);
+                        return false;
+                    }
+                }
+            }
+        } while (Process32Next(hSnapshot, &pe32));
+    }
+
+    CloseHandle(hSnapshot);
+    UE_LOG(LogTemp, Warning, TEXT("Process not found: %s"), *ProcessName);
+    return false;
+#else
+    // 非Windows平台的简单实现
+    UE_LOG(LogTemp, Warning, TEXT("TerminateExternalApplication called on non-Windows platform. This function requires proper implementation with system APIs."));
+    return false;
+#endif
+}
+
+TArray<FString> UUtilityExtendBPLibrary::GetAllRunningProcesses()
+{
+    TArray<FString> ProcessList;
+    
+#if PLATFORM_WINDOWS
+    HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+    if (hSnapshot == INVALID_HANDLE_VALUE)
+    {
+        return ProcessList;
+    }
+
+    PROCESSENTRY32 pe32;
+    pe32.dwSize = sizeof(PROCESSENTRY32);
+
+    if (Process32First(hSnapshot, &pe32))
+    {
+        do
+        {
+            FString ProcessName = FString(pe32.szExeFile);
+            if (!ProcessName.IsEmpty())
+            {
+                ProcessList.Add(ProcessName);
+            }
+        } while (Process32Next(hSnapshot, &pe32));
+    }
+
+    CloseHandle(hSnapshot);
+#else
+    // 非Windows平台的简单实现
+    UE_LOG(LogTemp, Warning, TEXT("GetAllRunningProcesses called on non-Windows platform. This function requires proper implementation with system APIs."));
+#endif
+    
+    return ProcessList;
+}
+
+bool UUtilityExtendBPLibrary::WaitForExternalApplication(const FString& ProcessName, float TimeoutSeconds)
+{
+    // 等待外部应用程序启动
+    float ElapsedTime = 0.0f;
+    const float CheckInterval = 0.1f; // 每0.1秒检查一次
+    
+    while (ElapsedTime < TimeoutSeconds)
+    {
+        if (IsExternalApplicationRunning(ProcessName))
+        {
+            UE_LOG(LogTemp, Log, TEXT("External application %s is now running"), *ProcessName);
+            return true;
         }
+        
+        // 等待一小段时间
+        FPlatformProcess::Sleep(CheckInterval);
+        ElapsedTime += CheckInterval;
     }
     
-    return nullptr;
+    UE_LOG(LogTemp, Warning, TEXT("Timeout waiting for external application: %s"), *ProcessName);
+    return false;
 }
+
+
+
 
 

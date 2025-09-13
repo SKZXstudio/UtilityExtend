@@ -81,8 +81,13 @@ public:
     // 注册的事件接收者列表
     static TArray<TWeakObjectPtr<UObject>> NotificationEventReceivers;
 
+    // ------------------------------------编辑器通知相关函数------------------------------------
     // 创建常规通知节点（不带按钮）
-    UFUNCTION(BlueprintCallable, meta = (DisplayName = "Create Editor Notification", Keywords = "创建编辑器通知 显示通知"), Category = "UtilityExtend")
+    UFUNCTION(BlueprintCallable, meta = (
+        DisplayName = "创建编辑器通知", 
+        Keywords = "创建编辑器通知 显示通知", 
+        Category = "UtilityExtend|编辑器通知"
+    ))
     static UPARAM(DisplayName = "通知ID") FString CreateEditorNotification(
         UPARAM(DisplayName = "消息内容") const FString& Message,
         UPARAM(DisplayName = "通知类型") EEditorNotificationType NotificationType = EEditorNotificationType::Default,
@@ -91,8 +96,12 @@ public:
     );
 
     // 创建带加载动画的通知节点（支持按钮）
-    UFUNCTION(BlueprintCallable, meta = (DisplayName = "Create Loading Notification", Keywords = "创建加载通知 带按钮通知"), Category = "UtilityExtend")
-    static UPARAM(DisplayName = "通知ID") FString CreateLoadingNotification(
+    UFUNCTION(BlueprintCallable, meta = (
+        DisplayName = "创建编辑器等待通知", 
+        Keywords = "创建等待通知 带按钮",
+        Category = "UtilityExtend|编辑器通知"
+    ))
+    static UPARAM(DisplayName = "通知ID") FString CreateEditorLoadingNotification(
         UPARAM(DisplayName = "消息内容") const FString& Message,
         UPARAM(DisplayName = "通知对象") UUtilityLoadingNotification*& OutNotificationObject,
         UPARAM(DisplayName = "显示按钮") bool bShowButton = false,
@@ -100,24 +109,173 @@ public:
         UPARAM(DisplayName = "按钮提示") const FString& ButtonTooltip = TEXT("")
     );
 
-    // 统一的清除通知节点
-    UFUNCTION(BlueprintCallable, meta = (DisplayName = "Remove Editor Notification", Keywords = "移除编辑器通知 清除通知 删除通知"), Category = "UtilityExtend")
+    // 创建复杂通知
+    UFUNCTION(BlueprintCallable, meta = (
+        DisplayName = "创建复杂通知", 
+        Keywords = "create complex notification",
+        ToolTip = "创建一个支持多按钮、进度条和事件绑定的复杂通知对象",
+        Category = "UtilityExtend|编辑器通知"
+    ))
+    static UPARAM(DisplayName = "通知返回对象") UUtilityLoadingNotification* CreateComplexNotification(
+        UPARAM(DisplayName = "标题") const FString& Title,
+        UPARAM(DisplayName = "内容") const FString& Text,
+        UPARAM(DisplayName = "按钮文本数组") const TArray<FString>& ButtonTexts,
+        UPARAM(DisplayName = "显示进度条") bool bShowProgressBar = true
+    );
+
+    // 清除通知
+    UFUNCTION(BlueprintCallable, meta = (
+        DisplayName = "移除编辑器通知", 
+        Keywords = "移除编辑器通知 清除通知 删除通知", 
+        Category = "UtilityExtend|编辑器通知"
+    ))
     static UPARAM(DisplayName = "移除成功") bool RemoveEditorNotification(
-        UPARAM(DisplayName = "通知ID (空=全部清除)") const FString& NotificationId = TEXT(""),
+        UPARAM(DisplayName = "通知ID [ID为空则全部移除]") const FString& NotificationId = TEXT(""),
         UPARAM(DisplayName = "清除全部") bool bRemoveAll = false
     );
 
-    UFUNCTION(BlueprintCallable, meta = (DisplayName = "Restart Editor", Keywords = "重启编辑器 重新启动"), Category = "UtilityExtend")
+    // ------------------------------------插件相关函数------------------------------------
+    // 路径相关函数
+    UFUNCTION(BlueprintCallable, BlueprintPure, meta = (
+        DisplayName = "获取UtilityExtend插件目录", 
+        Keywords = "get utilityextend plugin directory",
+        ToolTip = "获取UtilityExtend插件的根目录路径",
+        Category = "UtilityExtend|路径"
+    ))
+    static UPARAM(DisplayName = "插件目录路径") FString GetUtilityExtendPluginDirectory();
+
+
+    // ------------------------------------编辑器操作相关函数------------------------------------
+    // 重启编辑器
+    UFUNCTION(BlueprintCallable, meta = (
+        DisplayName = "重启编辑器", 
+        Keywords = "Restart Editor",
+        Category = "UtilityExtend|编辑器操作"
+    ))
     static void RestartEditor();
 
+    // UtilityWidget运行相关函数
+    UFUNCTION(BlueprintCallable, meta = (
+        DisplayName = "运行编辑器工具控件", 
+        Keywords = "Run Utility Widget",
+        ToolTip = "运行指定的EditorUtilityWidget，效果等同于右键点击'运行编辑器工具控件'",
+        Category = "UtilityExtend|编辑器操作|编辑器工具控件增强"
+    ))
+    static UPARAM(DisplayName = "运行状态") bool RunUtilityWidget(
+        UPARAM(DisplayName = "控件蓝图") class UEditorUtilityWidgetBlueprint* WidgetBlueprint,
+        UPARAM(DisplayName = "标签页ID") FString& OutTabId
+    );
+
+    UFUNCTION(BlueprintCallable, meta = (
+        DisplayName = "关闭编辑器工具控件", 
+        Keywords = "close utility widget tab",
+        ToolTip = "通过标签页ID关闭指定的UtilityWidget标签页",
+        Category = "UtilityExtend|编辑器操作|编辑器工具控件增强"
+    ))
+    static UPARAM(DisplayName = "关闭状态") bool CloseUtilityWidgetTab(
+        UPARAM(DisplayName = "标签页ID") const FString& TabId
+    );
+
+// ------------------------------------实验性功能------------------------------------
+    // ===============文件读写相关函数===============
+
+    // 文件读写相关函数
+    UFUNCTION(BlueprintCallable, meta = (
+        DisplayName = "用文本方式读取任意文件", 
+        Keywords = "Read Text File",
+        ToolTip = "从指定路径读取文本文件内容，支持相对路径和绝对路径",
+        Category = "UtilityExtend|实验性功能|文件处理"
+    ))
+    static UPARAM(DisplayName = "读取状态") bool ReadTextFile(
+        UPARAM(DisplayName = "文件路径") const FString& FilePath,
+        UPARAM(DisplayName = "文件内容") FString& OutContent,
+        UPARAM(DisplayName = "错误信息") FString& OutErrorMessage
+    );
+
+    UFUNCTION(BlueprintCallable, meta = (
+        DisplayName = "以文本方式写入文件", 
+        Keywords = "Write Text File",
+        ToolTip = "将文本内容保存到指定路径的文件，支持创建目录和覆盖文件",
+        Category = "UtilityExtend|实验性功能|文件处理"
+    ))
+    static UPARAM(DisplayName = "写入状态") bool WriteTextFile(
+        UPARAM(DisplayName = "文件路径") const FString& FilePath,
+        UPARAM(DisplayName = "文件内容") const FString& Content,
+        UPARAM(DisplayName = "错误信息") FString& OutErrorMessage,
+        UPARAM(DisplayName = "覆盖文件") bool bOverwrite = true,
+        UPARAM(DisplayName = "创建目录") bool bCreateDirectories = true
+    );
+
+    UFUNCTION(BlueprintCallable, meta = (
+        DisplayName = "检查文件是否存在", 
+        Keywords = "check file exists",
+        ToolTip = "检查指定路径的文件是否存在",
+        Category = "UtilityExtend|实验性功能|文件处理"
+    ))
+    static UPARAM(DisplayName = "文件存在") bool CheckFileExists(
+        UPARAM(DisplayName = "文件路径") const FString& FilePath
+    );
+
+    UFUNCTION(BlueprintCallable, meta = (
+        DisplayName = "获取文件大小", 
+        Keywords = "Get File Size",
+        ToolTip = "获取指定文件的大小（字节）",
+        Category = "UtilityExtend|实验性功能|文件处理"
+    ))
+    static UPARAM(DisplayName = "文件大小") int64 GetFileSize(
+        UPARAM(DisplayName = "文件路径") const FString& FilePath
+    );
+
+    UFUNCTION(BlueprintCallable, meta = (
+        DisplayName = "删除文件", 
+        Keywords = "delete file",
+        ToolTip = "删除指定路径的文件",
+        Category = "UtilityExtend|实验性功能|文件处理"
+    ))
+    static UPARAM(DisplayName = "删除状态") bool DeleteFile(
+        UPARAM(DisplayName = "文件路径") const FString& FilePath,
+        UPARAM(DisplayName = "错误信息") FString& OutErrorMessage
+    );
+
+    UFUNCTION(BlueprintCallable, meta = (
+        DisplayName = "复制文件", 
+        Keywords = "Copy File",
+        ToolTip = "将文件从源路径复制到目标路径，支持创建目录和覆盖文件",
+        Category = "UtilityExtend|实验性功能|文件处理"
+    ))
+    static UPARAM(DisplayName = "复制状态") bool CopyFile(
+        UPARAM(DisplayName = "源文件路径") const FString& SourceFilePath,
+        UPARAM(DisplayName = "目标文件路径") const FString& DestFilePath,
+        UPARAM(DisplayName = "错误信息") FString& OutErrorMessage,
+        UPARAM(DisplayName = "覆盖文件") bool bOverwrite = true,
+        UPARAM(DisplayName = "创建目录") bool bCreateDirectories = true
+    );
+
+    // 文件对话框相关函数
+    UFUNCTION(BlueprintCallable, meta = (
+        DisplayName = "打开文件选择对话框", 
+        Keywords = "open file dialog",
+        ToolTip = "打开系统文件选择对话框，支持文件类型过滤和多选模式",
+        Category = "UtilityExtend|实验性功能|文件处理"
+    ))
+    static UPARAM(DisplayName = "选中的文件路径") TArray<FString> OpenFileDialog(
+        UPARAM(DisplayName = "对话框标题") const FString& DialogTitle = TEXT("选择文件"),
+        UPARAM(DisplayName = "默认路径") const FString& DefaultPath = TEXT(""),
+        UPARAM(DisplayName = "文件类型过滤器") const FString& FileTypeFilter = TEXT("所有文件|*.*"),
+        UPARAM(DisplayName = "允许多选") bool bAllowMultipleSelection = false
+    );
+
+
+    // ===============外部软件调用相关函数===============
+    
     // 外部软件调用相关函数
     UFUNCTION(BlueprintCallable, meta = (
         DisplayName = "Launch External Application", 
         Keywords = "启动外部程序 运行exe 调用外部软件",
         ToolTip = "启动外部可执行文件，支持命令行参数和工作目录设置",
-        Category = "UtilityExtend|ExternalApp"
+        Category = "UtilityExtend|实验性功能|ExternalApp"
     ))
-    static UPARAM(DisplayName = "启动成功") bool LaunchExternalApplication(
+    static UPARAM(DisplayName = "启动状态") bool LaunchExternalApplication(
         UPARAM(DisplayName = "可执行文件路径") const FString& ExecutablePath, 
         UPARAM(DisplayName = "命令行参数") const FString& Arguments = TEXT(""), 
         UPARAM(DisplayName = "工作目录") const FString& WorkingDirectory = TEXT(""), 
@@ -132,9 +290,9 @@ public:
         DisplayName = "Launch External Application With Process Info", 
         Keywords = "启动外部程序详细信息 运行exe详细信息",
         ToolTip = "启动外部程序并返回详细信息，包括进程ID和错误信息",
-        Category = "UtilityExtend|ExternalApp"
+        Category = "UtilityExtend|实验性功能|ExternalApp"
     ))
-    static UPARAM(DisplayName = "启动成功") bool LaunchExternalApplicationWithInfo(
+    static UPARAM(DisplayName = "启动状态") bool LaunchExternalApplicationWithInfo(
         UPARAM(DisplayName = "可执行文件路径") const FString& ExecutablePath, 
         UPARAM(DisplayName = "命令行参数") const FString& Arguments, 
         UPARAM(DisplayName = "工作目录") const FString& WorkingDirectory, 
@@ -151,7 +309,7 @@ public:
         DisplayName = "Is External Application Running", 
         Keywords = "检查外部程序是否运行 检查进程",
         ToolTip = "检查指定名称的程序是否正在运行",
-        Category = "UtilityExtend|ExternalApp"
+        Category = "UtilityExtend|实验性功能|ExternalApp"
     ))
     static UPARAM(DisplayName = "是否运行") bool IsExternalApplicationRunning(
         UPARAM(DisplayName = "进程名称") const FString& ProcessName
@@ -161,9 +319,9 @@ public:
         DisplayName = "Terminate External Application", 
         Keywords = "终止外部程序 结束进程",
         ToolTip = "强制终止指定的外部程序",
-        Category = "UtilityExtend|ExternalApp"
+        Category = "UtilityExtend|实验性功能|ExternalApp"
     ))
-    static UPARAM(DisplayName = "终止成功") bool TerminateExternalApplication(
+    static UPARAM(DisplayName = "终止状态") bool TerminateExternalApplication(
         UPARAM(DisplayName = "进程名称") const FString& ProcessName
     );
 
@@ -171,7 +329,7 @@ public:
         DisplayName = "Get All Running Processes", 
         Keywords = "获取所有运行进程 列出进程",
         ToolTip = "获取系统中所有正在运行的进程列表",
-        Category = "UtilityExtend|ExternalApp"
+        Category = "UtilityExtend|实验性功能|ExternalApp"
     ))
     static UPARAM(DisplayName = "进程列表") TArray<FString> GetAllRunningProcesses();
 
@@ -179,143 +337,11 @@ public:
         DisplayName = "Wait For External Application", 
         Keywords = "等待外部程序 等待进程",
         ToolTip = "等待指定的外部程序启动，支持超时设置",
-        Category = "UtilityExtend|ExternalApp"
+        Category = "UtilityExtend|实验性功能|ExternalApp"
     ))
-    static UPARAM(DisplayName = "等待成功") bool WaitForExternalApplication(
+    static UPARAM(DisplayName = "等待状态") bool WaitForExternalApplication(
         UPARAM(DisplayName = "进程名称") const FString& ProcessName, 
         UPARAM(DisplayName = "超时时间") float TimeoutSeconds = 30.0f
     );
 
-    // 文件读写相关函数
-    UFUNCTION(BlueprintCallable, meta = (
-        DisplayName = "Read Text File", 
-        Keywords = "读取文本文件 读文件 文本读取",
-        ToolTip = "从指定路径读取文本文件内容，支持相对路径和绝对路径",
-        Category = "UtilityExtend|FileIO"
-    ))
-    static UPARAM(DisplayName = "读取成功") bool ReadTextFile(
-        UPARAM(DisplayName = "文件路径") const FString& FilePath,
-        UPARAM(DisplayName = "文件内容") FString& OutContent,
-        UPARAM(DisplayName = "错误信息") FString& OutErrorMessage
-    );
-
-    UFUNCTION(BlueprintCallable, meta = (
-        DisplayName = "Write Text File", 
-        Keywords = "写入文本文件 保存文件 文本写入",
-        ToolTip = "将文本内容保存到指定路径的文件，支持创建目录和覆盖文件",
-        Category = "UtilityExtend|FileIO"
-    ))
-    static UPARAM(DisplayName = "写入成功") bool WriteTextFile(
-        UPARAM(DisplayName = "文件路径") const FString& FilePath,
-        UPARAM(DisplayName = "文件内容") const FString& Content,
-        UPARAM(DisplayName = "错误信息") FString& OutErrorMessage,
-        UPARAM(DisplayName = "覆盖文件") bool bOverwrite = true,
-        UPARAM(DisplayName = "创建目录") bool bCreateDirectories = true
-    );
-
-    UFUNCTION(BlueprintCallable, meta = (
-        DisplayName = "Check File Exists", 
-        Keywords = "检查文件存在 文件是否存在",
-        ToolTip = "检查指定路径的文件是否存在",
-        Category = "UtilityExtend|FileIO"
-    ))
-    static UPARAM(DisplayName = "文件存在") bool CheckFileExists(
-        UPARAM(DisplayName = "文件路径") const FString& FilePath
-    );
-
-    UFUNCTION(BlueprintCallable, meta = (
-        DisplayName = "Get File Size", 
-        Keywords = "获取文件大小 文件尺寸",
-        ToolTip = "获取指定文件的大小（字节）",
-        Category = "UtilityExtend|FileIO"
-    ))
-    static UPARAM(DisplayName = "文件大小") int64 GetFileSize(
-        UPARAM(DisplayName = "文件路径") const FString& FilePath
-    );
-
-    UFUNCTION(BlueprintCallable, meta = (
-        DisplayName = "Delete File", 
-        Keywords = "删除文件 移除文件",
-        ToolTip = "删除指定路径的文件",
-        Category = "UtilityExtend|FileIO"
-    ))
-    static UPARAM(DisplayName = "删除成功") bool DeleteFile(
-        UPARAM(DisplayName = "文件路径") const FString& FilePath,
-        UPARAM(DisplayName = "错误信息") FString& OutErrorMessage
-    );
-
-    UFUNCTION(BlueprintCallable, meta = (
-        DisplayName = "Copy File", 
-        Keywords = "复制文件 拷贝文件 文件复制",
-        ToolTip = "将文件从源路径复制到目标路径，支持创建目录和覆盖文件",
-        Category = "UtilityExtend|FileIO"
-    ))
-    static UPARAM(DisplayName = "复制成功") bool CopyFile(
-        UPARAM(DisplayName = "源文件路径") const FString& SourceFilePath,
-        UPARAM(DisplayName = "目标文件路径") const FString& DestFilePath,
-        UPARAM(DisplayName = "错误信息") FString& OutErrorMessage,
-        UPARAM(DisplayName = "覆盖文件") bool bOverwrite = true,
-        UPARAM(DisplayName = "创建目录") bool bCreateDirectories = true
-    );
-
-    // 文件对话框相关函数
-    UFUNCTION(BlueprintCallable, meta = (
-        DisplayName = "Open File Dialog", 
-        Keywords = "打开文件对话框 选择文件 文件浏览器",
-        ToolTip = "打开系统文件选择对话框，支持文件类型过滤和多选模式",
-        Category = "UtilityExtend|FileDialog"
-    ))
-    static UPARAM(DisplayName = "选中的文件路径") TArray<FString> OpenFileDialog(
-        UPARAM(DisplayName = "对话框标题") const FString& DialogTitle = TEXT("选择文件"),
-        UPARAM(DisplayName = "默认路径") const FString& DefaultPath = TEXT(""),
-        UPARAM(DisplayName = "文件类型过滤器") const FString& FileTypeFilter = TEXT("所有文件|*.*"),
-        UPARAM(DisplayName = "允许多选") bool bAllowMultipleSelection = false
-    );
-
-    // 路径相关函数
-    UFUNCTION(BlueprintCallable, BlueprintPure, meta = (
-        DisplayName = "Get UtilityExtend Plugin Directory", 
-        Keywords = "获取插件目录 插件路径 插件根目录",
-        ToolTip = "获取UtilityExtend插件的根目录路径",
-        Category = "UtilityExtend|Path"
-    ))
-    static UPARAM(DisplayName = "插件目录路径") FString GetUtilityExtendPluginDirectory();
-
-    // UtilityWidget运行相关函数
-    UFUNCTION(BlueprintCallable, meta = (
-        DisplayName = "Run Utility Widget", 
-        Keywords = "运行实用工具控件 启动UtilityWidget 运行编辑器工具控件",
-        ToolTip = "运行指定的EditorUtilityWidget，效果等同于右键点击'运行编辑器工具控件'",
-        Category = "UtilityExtend|UtilityWidget"
-    ))
-    static UPARAM(DisplayName = "运行成功") bool RunUtilityWidget(
-        UPARAM(DisplayName = "控件蓝图") class UEditorUtilityWidgetBlueprint* WidgetBlueprint,
-        UPARAM(DisplayName = "标签页显示名称") const FString& TabDisplayName,
-        UPARAM(DisplayName = "运行成功") bool& bOutSuccess,
-        UPARAM(DisplayName = "标签页ID") FString& OutTabId
-    );
-
-    UFUNCTION(BlueprintCallable, meta = (
-        DisplayName = "Close Utility Widget Tab", 
-        Keywords = "关闭实用工具控件 关闭标签页 关闭UtilityWidget",
-        ToolTip = "通过标签页ID关闭指定的UtilityWidget标签页",
-        Category = "UtilityExtend|UtilityWidget"
-    ))
-    static UPARAM(DisplayName = "关闭成功") bool CloseUtilityWidgetTab(
-        UPARAM(DisplayName = "标签页ID") const FString& TabId
-    );
-
-    // 新的加载通知函数 - 返回通知对象
-    UFUNCTION(BlueprintCallable, meta = (
-        DisplayName = "Create Loading Notification Object", 
-        Keywords = "创建加载通知对象 带按钮通知 委托绑定",
-        ToolTip = "创建一个可以绑定事件的加载通知对象",
-        Category = "UtilityExtend|Notification"
-    ))
-    static UPARAM(DisplayName = "通知对象") UUtilityLoadingNotification* CreateLoadingNotificationObject(
-        UPARAM(DisplayName = "标题") const FString& Title,
-        UPARAM(DisplayName = "内容") const FString& Text,
-        UPARAM(DisplayName = "按钮文本数组") const TArray<FString>& ButtonTexts,
-        UPARAM(DisplayName = "显示进度条") bool bShowProgressBar = true
-    );
 };
