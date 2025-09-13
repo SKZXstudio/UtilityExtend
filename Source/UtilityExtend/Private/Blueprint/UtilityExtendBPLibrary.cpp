@@ -248,31 +248,31 @@ FString UUtilityExtendBPLibrary::CreateEditorLoadingNotification(
     return NotificationId;
 }
 
-// 创建复杂通知
-UUtilityLoadingNotification* UUtilityExtendBPLibrary::CreateComplexNotification(const FString& Title, const FString& Text, const TArray<FString>& ButtonTexts, bool bShowProgressBar)
-{
-    // 创建通知对象实例
-    UUtilityLoadingNotification* NotificationObject = NewObject<UUtilityLoadingNotification>();
+// // 创建复杂通知
+// UUtilityLoadingNotification* UUtilityExtendBPLibrary::CreateComplexNotification(const FString& Title, const FString& Text, const TArray<FString>& ButtonTexts, bool bShowProgressBar)
+// {
+//     // 创建通知对象实例
+//     UUtilityLoadingNotification* NotificationObject = NewObject<UUtilityLoadingNotification>();
     
-    if (NotificationObject)
-    {
-        // 创建通知
-        bool bSuccess = NotificationObject->CreateNotification(Title, Text, ButtonTexts, bShowProgressBar);
+//     if (NotificationObject)
+//     {
+//         // 创建通知
+//         bool bSuccess = NotificationObject->CreateNotification(Title, Text, ButtonTexts, bShowProgressBar);
         
-        if (bSuccess)
-        {
-            return NotificationObject;
-    }
-    else
-    {
-            // 创建失败，清理对象
-            NotificationObject->MarkAsGarbage();
-            return nullptr;
-        }
-    }
+//         if (bSuccess)
+//         {
+//             return NotificationObject;
+//     }
+//     else
+//     {
+//             // 创建失败，清理对象
+//             NotificationObject->MarkAsGarbage();
+//             return nullptr;
+//         }
+//     }
     
-    return nullptr;
-}
+//     return nullptr;
+// }
 
 // 统一的清除通知函数
 bool UUtilityExtendBPLibrary::RemoveEditorNotification(const FString& NotificationId, bool bRemoveAll)

@@ -109,19 +109,19 @@ public:
         UPARAM(DisplayName = "按钮提示") const FString& ButtonTooltip = TEXT("")
     );
 
-    // 创建复杂通知
-    UFUNCTION(BlueprintCallable, meta = (
-        DisplayName = "创建复杂通知", 
-        Keywords = "create complex notification",
-        ToolTip = "创建一个支持多按钮、进度条和事件绑定的复杂通知对象",
-        Category = "UtilityExtend|编辑器通知"
-    ))
-    static UPARAM(DisplayName = "通知返回对象") UUtilityLoadingNotification* CreateComplexNotification(
-        UPARAM(DisplayName = "标题") const FString& Title,
-        UPARAM(DisplayName = "内容") const FString& Text,
-        UPARAM(DisplayName = "按钮文本数组") const TArray<FString>& ButtonTexts,
-        UPARAM(DisplayName = "显示进度条") bool bShowProgressBar = true
-    );
+    // // 创建复杂通知
+    // UFUNCTION(BlueprintCallable, meta = (
+    //     DisplayName = "创建复杂通知", 
+    //     Keywords = "create complex notification",
+    //     ToolTip = "创建一个支持多按钮、进度条和事件绑定的复杂通知对象",
+    //     Category = "UtilityExtend|编辑器通知"
+    // ))
+    // static UPARAM(DisplayName = "通知返回对象") UUtilityLoadingNotification* CreateComplexNotification(
+    //     UPARAM(DisplayName = "标题") const FString& Title,
+    //     UPARAM(DisplayName = "内容") const FString& Text,
+    //     UPARAM(DisplayName = "按钮文本数组") const TArray<FString>& ButtonTexts,
+    //     UPARAM(DisplayName = "显示进度条") bool bShowProgressBar = true
+    // );
 
     // 清除通知
     UFUNCTION(BlueprintCallable, meta = (
@@ -267,7 +267,7 @@ public:
 
 
     // ===============外部软件调用相关函数===============
-    
+
     // 外部软件调用相关函数
     UFUNCTION(BlueprintCallable, meta = (
         DisplayName = "Launch External Application", 
