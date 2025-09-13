@@ -5,6 +5,26 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "UtilityExtendBPLibrary.generated.h"
 
+/**
+ * 编辑器通知类型枚举
+ */
+UENUM(BlueprintType)
+enum class EEditorNotificationType : uint8
+{
+    /** 默认通知 */
+    Default         UMETA(DisplayName = "默认"),
+    /** 成功通知 */
+    Success         UMETA(DisplayName = "成功"),
+    /** 失败通知 */
+    Fail            UMETA(DisplayName = "失败"),
+    /** 警告通知 */
+    Warning         UMETA(DisplayName = "警告"),
+    /** 信息通知 */
+    Info            UMETA(DisplayName = "信息"),
+    /** 带加载动画的通知 */
+    WithThrobber    UMETA(DisplayName = "带加载动画")
+};
+
 /* 
 *	Function library class.
 *	Each function in it is expected to be static and represents blueprint node that can be called in any blueprint.
@@ -32,7 +52,12 @@ public:
     static TArray<TSharedPtr<SNotificationItem>> CreatedNotifications;
 
     UFUNCTION(BlueprintCallable, meta = (DisplayName = "Show Editor Notification", Keywords = "调用编辑器通知 显示通知"), Category = "UtilityExtend")
-    static void ShowEditorNotification(const FString& Message, float Duration = 5.0f, bool bAutoExpire = true, bool bUseThrobber = false, bool bUseSuccessIcon = false, bool bUseFailIcon = false);
+    static void ShowEditorNotification(
+        UPARAM(DisplayName = "消息内容") const FString& Message, 
+        UPARAM(DisplayName = "通知类型") EEditorNotificationType NotificationType = EEditorNotificationType::Default,
+        UPARAM(DisplayName = "持续时间") float Duration = 5.0f, 
+        UPARAM(DisplayName = "自动过期") bool bAutoExpire = true
+    );
 
     UFUNCTION(BlueprintCallable, meta = (DisplayName = "Remove All Editor Notifications", Keywords = "移除通知 清除通知"), Category = "UtilityExtend")
     static void RemoveAllEditorNotifications();

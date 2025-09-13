@@ -68,7 +68,7 @@
 // 静态成员变量定义
 TArray<TSharedPtr<SNotificationItem>> UUtilityExtendBPLibrary::CreatedNotifications;
 
-void UUtilityExtendBPLibrary::ShowEditorNotification(const FString& Message, float Duration, bool bAutoExpire, bool bUseThrobber, bool bUseSuccessIcon, bool bUseFailIcon)
+void UUtilityExtendBPLibrary::ShowEditorNotification(const FString& Message, EEditorNotificationType NotificationType, float Duration, bool bAutoExpire)
 {
     // 检查Slate系统是否可用
     if (!FSlateApplication::IsInitialized())
@@ -80,11 +80,39 @@ void UUtilityExtendBPLibrary::ShowEditorNotification(const FString& Message, flo
     // 创建通知
     FNotificationInfo Info(FText::FromString(Message));
     Info.bUseLargeFont = false;
-    Info.bUseThrobber = bUseThrobber;
-    Info.bUseSuccessFailIcons = bUseSuccessIcon || bUseFailIcon;
     Info.FadeInDuration = 0.1f;
     Info.FadeOutDuration = 0.5f;
     Info.ExpireDuration = Duration;
+
+    // 根据通知类型设置相应的属性
+    switch (NotificationType)
+    {
+        case EEditorNotificationType::Success:
+            Info.bUseSuccessFailIcons = true;
+            Info.bUseThrobber = false;
+            break;
+        case EEditorNotificationType::Fail:
+            Info.bUseSuccessFailIcons = true;
+            Info.bUseThrobber = false;
+            break;
+        case EEditorNotificationType::Warning:
+            Info.bUseSuccessFailIcons = true;
+            Info.bUseThrobber = false;
+            break;
+        case EEditorNotificationType::Info:
+            Info.bUseSuccessFailIcons = false;
+            Info.bUseThrobber = false;
+            break;
+        case EEditorNotificationType::WithThrobber:
+            Info.bUseSuccessFailIcons = false;
+            Info.bUseThrobber = true;
+            break;
+        case EEditorNotificationType::Default:
+        default:
+            Info.bUseSuccessFailIcons = false;
+            Info.bUseThrobber = false;
+            break;
+    }
 
     // 显示通知
     TSharedPtr<SNotificationItem> NotificationItem = FSlateNotificationManager::Get().AddNotification(Info);
@@ -93,6 +121,26 @@ void UUtilityExtendBPLibrary::ShowEditorNotification(const FString& Message, flo
     if (NotificationItem.IsValid())
     {
         CreatedNotifications.Add(NotificationItem);
+        
+        // 根据通知类型设置完成状态
+        switch (NotificationType)
+        {
+            case EEditorNotificationType::Success:
+                NotificationItem->SetCompletionState(SNotificationItem::CS_Success);
+                break;
+            case EEditorNotificationType::Fail:
+                NotificationItem->SetCompletionState(SNotificationItem::CS_Fail);
+                break;
+            case EEditorNotificationType::Warning:
+                NotificationItem->SetCompletionState(SNotificationItem::CS_Fail); // 警告使用失败状态的图标
+                break;
+            case EEditorNotificationType::Info:
+            case EEditorNotificationType::WithThrobber:
+            case EEditorNotificationType::Default:
+            default:
+                NotificationItem->SetCompletionState(SNotificationItem::CS_Pending);
+                break;
+        }
         
         // 如果设置了自动过期，启动定时器
         if (bAutoExpire)
