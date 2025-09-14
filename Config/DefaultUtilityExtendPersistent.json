@@ -12,12 +12,12 @@
 					"BoundClass": "/UtilityExtend/Blueprint/ButtonScript/Editor/BS_RestartUnrealEngine.BS_RestartUnrealEngine_C"
 				},
 				{
-					"ItemName": "顶部工具栏图标注册工具",
-					"BoundClass": "/UtilityExtend/Blueprint/ButtonScript/IconRegTool/BS_TopBarBtnIconRegTool.BS_TopBarBtnIconRegTool_C"
-				},
-				{
 					"ItemName": "游戏存档编辑器",
 					"BoundClass": "/UtilityExtend/Blueprint/ButtonScript/SaveGame/BS_SaveGameEditor.BS_SaveGameEditor_C"
+				},
+				{
+					"ItemName": "顶部工具栏图标注册工具",
+					"BoundClass": "/UtilityExtend/Blueprint/ButtonScript/IconRegTool/BS_TopBarBtnIconRegTool.BS_TopBarBtnIconRegTool_C"
 				}
 			]
 		}
